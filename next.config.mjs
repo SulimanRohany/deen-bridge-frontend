@@ -2,6 +2,7 @@
 const nextConfig = {
   // Disable React Strict Mode to prevent WebSocket double-mounting issues
   reactStrictMode: false,
+  output: 'standalone',
   images: {
     remotePatterns: [
       {
