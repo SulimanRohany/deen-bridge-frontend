@@ -13,7 +13,7 @@ import {
   IconChevronRight,
   IconRotateClockwise,
   IconBook2,
-  IconLightbulb,
+  IconBulb,
   IconInfoCircle
 } from '@tabler/icons-react'
 
@@ -66,7 +66,7 @@ const getIcon = (iconName) => {
     case 'chevronRight': return IconChevronRight
     case 'rotate': return IconRotateClockwise
     case 'book': return IconBook2
-    case 'lightbulb': return IconLightbulb
+    case 'lightbulb': return IconBulb
     default: return null
   }
 }

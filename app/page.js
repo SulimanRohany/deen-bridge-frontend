@@ -1,5 +1,7 @@
 'use client'
 
+/* eslint-disable react/no-unescaped-entities, @next/next/no-img-element */
+
 import { useContext, useEffect, useState, useMemo, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -191,13 +193,14 @@ function LiveActivityFeed() {
   ]
 
   const [currentIndex, setCurrentIndex] = useState(0)
+  const activitiesCount = activities.length
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setCurrentIndex((prev) => (prev + 1) % activities.length)
+      setCurrentIndex((prev) => (prev + 1) % activitiesCount)
     }, 3000)
     return () => clearInterval(interval)
-  }, [])
+  }, [activitiesCount])
 
   return (
     <div className="overflow-hidden bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-lg">
@@ -243,13 +246,15 @@ function useScrollAnimation() {
       }
     )
 
-    if (ref.current) {
-      observer.observe(ref.current)
+    const currentRef = ref.current
+
+    if (currentRef) {
+      observer.observe(currentRef)
     }
 
     return () => {
-      if (ref.current) {
-        observer.unobserve(ref.current)
+      if (currentRef) {
+        observer.unobserve(currentRef)
       }
     }
   }, [])
@@ -292,13 +297,15 @@ function AnimatedCounter({ end, duration = 2000, suffix = '' }) {
       { threshold: 0.5 }
     )
 
-    if (ref.current) {
-      observer.observe(ref.current)
+    const currentRef = ref.current
+
+    if (currentRef) {
+      observer.observe(currentRef)
     }
 
     return () => {
-      if (ref.current) {
-        observer.unobserve(ref.current)
+      if (currentRef) {
+        observer.unobserve(currentRef)
       }
     }
   }, [end, duration, hasAnimated])
@@ -1151,7 +1158,7 @@ export default function Home() {
       console.log('⚠️ No userData, skipping data load')
       setIsLoading(false)
     }
-  }, [userData, loadStudentData])
+  }, [userData, loadStudentData, isLoading])
 
   const handleRefresh = () => {
     if (!isLoading) {
