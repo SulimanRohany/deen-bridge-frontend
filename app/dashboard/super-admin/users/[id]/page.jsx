@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import axios from 'axios';
+import { config } from '@/lib/config';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -145,7 +146,7 @@ export default function UserProfilePage() {
       if (!token) return;
 
       const response = await axios.get(
-        `http://127.0.0.1:8000/api/auth/user/${userId}/`,
+        config.API_BASE_URL + `auth/user/${userId}/`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -216,7 +217,7 @@ export default function UserProfilePage() {
       };
 
       await axios.patch(
-        `http://127.0.0.1:8000/api/auth/user/${userId}/`,
+        config.API_BASE_URL + `auth/user/${userId}/`,
         formattedData,
         {
           headers: {

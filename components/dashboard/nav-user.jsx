@@ -31,6 +31,7 @@ import {
 
 import { useContext } from "react"
 import AuthContext from "@/context/AuthContext"
+import { getMediaUrl } from "@/lib/config"
 // import Link from "next/link"
 import Link from "next/link"
 
@@ -47,7 +48,7 @@ export function NavUser() {
     if (userData?.profile_image) {
         profileImage = userData.profile_image.startsWith('http') 
             ? userData.profile_image 
-            : `http://127.0.0.1:8000${userData.profile_image}`
+            : getMediaUrl(userData.profile_image)
     }
     return (
         <SidebarMenu>

@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
+import { config } from '@/lib/config';
 import { 
   IconUsers,
   IconBook,
@@ -71,7 +72,7 @@ export default function TeacherStudentsPage() {
       const token = parsedTokens.access;
       
       // Fetch classes first
-      const classesResponse = await axios.get('http://127.0.0.1:8000/api/course/', {
+      const classesResponse = await axios.get(config.API_BASE_URL + 'course/', {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -85,7 +86,7 @@ export default function TeacherStudentsPage() {
       };
       
       // Fetch enrollments
-      const enrollmentsResponse = await axios.get('http://127.0.0.1:8000/api/enrollment/', {
+      const enrollmentsResponse = await axios.get(config.API_BASE_URL + 'enrollment/', {
         headers: {
           'Authorization': `Bearer ${token}`,
         },

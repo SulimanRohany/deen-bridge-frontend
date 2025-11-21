@@ -87,7 +87,7 @@ export function useNotifications(userId) {
         return
       }
 
-      const wsUrl = config.WS_BASE_URL || 'ws://localhost:8000'
+      const wsUrl = config.WS_BASE_URL
       
       console.log(`Attempting to connect to WebSocket: ${wsUrl}/ws/notifications/`)
       

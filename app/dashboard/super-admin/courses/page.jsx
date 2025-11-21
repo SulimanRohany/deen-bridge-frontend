@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
 import { useDebounce } from '@/hooks/use-debounce';
+import { config, getMediaUrl } from '@/lib/config';
 import CoursePlaceholder from '@/components/CoursePlaceholder';
 import Pagination from '@/components/Pagination';
 import { Button } from '@/components/ui/button';
@@ -143,7 +144,7 @@ export default function ClassesPage() {
   const getApiInstance = () => {
     const token = getAccessToken();
     return axios.create({
-      baseURL: 'http://127.0.0.1:8000/api/',
+      baseURL: config.API_BASE_URL,
       headers: {
         'Content-Type': 'application/json',
         Authorization: token ? `Bearer ${token}` : '',
@@ -339,7 +340,7 @@ export default function ClassesPage() {
       classItem.cover_image 
         ? (classItem.cover_image.startsWith('http') 
             ? classItem.cover_image 
-            : `http://127.0.0.1:8000/media/${classItem.cover_image}`)
+            : getMediaUrl(`/media/${classItem.cover_image}`))
         : null
     );
     setErrors({});
@@ -415,8 +416,8 @@ export default function ClassesPage() {
       }
       
       // Use axios directly for FormData upload
-      const config = {
-        baseURL: 'http://127.0.0.1:8000/api/',
+      const axiosConfig = {
+        baseURL: config.API_BASE_URL,
         headers: {
           'Content-Type': 'multipart/form-data',
           Authorization: token ? `Bearer ${token}` : '',
@@ -424,10 +425,10 @@ export default function ClassesPage() {
       };
       
       if (currentClass) {
-        await axios.put(`course/${currentClass.id}/`, formDataToSend, config);
+        await axios.put(`course/${currentClass.id}/`, formDataToSend, axiosConfig);
         toast.success('Class updated successfully');
       } else {
-        await axios.post('course/', formDataToSend, config);
+        await axios.post('course/', formDataToSend, axiosConfig);
         toast.success('Class created successfully');
       }
       
@@ -830,7 +831,7 @@ export default function ClassesPage() {
                         src={
                           currentClass.cover_image.startsWith('http') 
                             ? currentClass.cover_image 
-                            : `http://127.0.0.1:8000/media/${currentClass.cover_image}`
+                            : getMediaUrl(`/media/${currentClass.cover_image}`)
                         }
                         alt={currentClass.title}
                         className="w-full h-full object-cover absolute inset-0"

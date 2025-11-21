@@ -11,6 +11,7 @@ import { useSFU } from "@/hooks/use-sfu"
 import { useAuth } from "@/hooks/use-auth"
 
 import { useParams, useRouter } from "next/navigation"
+import { config } from "@/lib/config"
 
 export default function VideoConference() {
   const params = useParams()
@@ -109,7 +110,7 @@ export default function VideoConference() {
           // Use sendBeacon for reliable delivery during page unload
           const blob = new Blob([JSON.stringify({ action: 'leave' })], { type: 'application/json' });
           navigator.sendBeacon(
-            `http://127.0.0.1:8000/api/course/session/${sessionId}/leave/`,
+            config.API_BASE_URL + `course/session/${sessionId}/leave/`,
             blob
           );
         }
@@ -199,8 +200,8 @@ export default function VideoConference() {
           // Detect if user is super admin and determine endpoint
           const isSuperAdmin = userData?.role === 'super_admin'
           const endpoint = isSuperAdmin 
-            ? `http://127.0.0.1:8000/api/course/session/${sessionId}/monitor/`
-            : `http://127.0.0.1:8000/api/course/session/${sessionId}/join/`
+            ? config.API_BASE_URL + `course/session/${sessionId}/monitor/`
+            : config.API_BASE_URL + `course/session/${sessionId}/join/`
           
           console.log('User type:', isSuperAdmin ? 'Super Admin (Observer)' : 'Regular User', {
             userRole: userData?.role,

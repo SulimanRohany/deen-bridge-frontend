@@ -17,8 +17,9 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Progress } from "@/components/ui/progress"
 import { toast } from "sonner"
+import { config } from "@/lib/config"
 
-const API_BASE_URL = 'http://127.0.0.1:8000/api'
+const API_BASE_URL = config.API_BASE_URL.replace(/\/$/, ''); // Remove trailing slash if present
 
 export default function ResourceUpload({ sessionId, onUploadComplete }) {
   const [files, setFiles] = useState([])

@@ -6,6 +6,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 import axios from 'axios'
+import { config } from '@/lib/config'
 import {
   IconArrowLeft,
   IconDeviceFloppy,
@@ -115,7 +116,7 @@ export default function CreateBlogPostPage() {
 
       const token = getAccessToken();
 
-      const response = await axios.post('http://127.0.0.1:8000/api/blog/post/', formData, {
+      const response = await axios.post(config.API_BASE_URL + 'blog/post/', formData, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'multipart/form-data'

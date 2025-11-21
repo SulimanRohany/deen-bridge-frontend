@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import api from '@/lib/api' // axios instance with auth interceptor
 import { convertClassTime, getDayName } from '@/lib/timezone-utils'
+import { getMediaUrl } from '@/lib/config'
 
 import {
   IconArrowLeft,
@@ -1720,7 +1721,7 @@ function EnrollmentCard({
                   {course.cover_image ? (
                     <>
                       <img 
-                        src={`http://127.0.0.1:8000${course.cover_image}`}
+                        src={getMediaUrl(course.cover_image)}
               alt={course.title}
                         className="w-full h-full object-cover"
                         onError={(e) => {

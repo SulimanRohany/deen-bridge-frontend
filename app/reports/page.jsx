@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useContext } from 'react';
+import { config } from '@/lib/config';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { 
@@ -154,7 +155,7 @@ export default function ReportsPage() {
       if (!token) return;
       
       // Use the unified communications API to fetch reports
-      const response = await fetch('http://127.0.0.1:8000/api/report/', {
+      const response = await fetch(config.API_BASE_URL + 'report/', {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -265,7 +266,7 @@ export default function ReportsPage() {
       }
       
       // Use fetch API for file uploads to ensure proper Content-Type with boundary
-      const response = await fetch('http://127.0.0.1:8000/api/report/', {
+      const response = await fetch(config.API_BASE_URL + 'report/', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -378,7 +379,7 @@ export default function ReportsPage() {
         formDataToSend.append('message', formData.content); // Use 'message' field for unified model
         formDataToSend.append('screen_shot', formData.screen_shot);
         
-        response = await fetch(`http://127.0.0.1:8000/api/report/${selectedReport.id}/`, {
+        response = await fetch(config.API_BASE_URL + `report/${selectedReport.id}/`, {
           method: 'PATCH',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -398,7 +399,7 @@ export default function ReportsPage() {
           updateData.screen_shot = null; // Explicitly set to null to remove
         }
         
-        response = await fetch(`http://127.0.0.1:8000/api/report/${selectedReport.id}/`, {
+        response = await fetch(config.API_BASE_URL + `report/${selectedReport.id}/`, {
           method: 'PATCH',
           headers: {
             'Authorization': `Bearer ${token}`,

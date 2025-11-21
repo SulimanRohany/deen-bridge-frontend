@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
+import { config } from '@/lib/config';
 import { 
   IconUsers, 
   IconBook, 
@@ -57,7 +58,7 @@ export default function TeacherDashboard() {
       const parsedTokens = JSON.parse(authTokens);
       const token = parsedTokens.access;
       
-      const response = await axios.get('http://127.0.0.1:8000/api/dashboard/teacher/', {
+      const response = await axios.get(config.API_BASE_URL + 'dashboard/teacher/', {
         headers: {
           'Authorization': `Bearer ${token}`,
         },

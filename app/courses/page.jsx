@@ -54,6 +54,7 @@ import {
 
 import { courseAPI } from '@/lib/api'
 import { convertClassTime, getDayName } from '@/lib/timezone-utils'
+import { getMediaUrl } from '@/lib/config'
 
 /** Normalize paginated/non-paginated responses */
 const toList = (data) => (Array.isArray(data) ? data : data?.results || [])
@@ -211,7 +212,7 @@ function LiveCourseCard({ course, onEnroll, liveSessions = [] }) {
           {/* Image with error handling */}
           {course.cover_image ? (
             <img 
-              src={course.cover_image.startsWith('http') ? course.cover_image : `http://127.0.0.1:8000${course.cover_image}`}
+              src={course.cover_image.startsWith('http') ? course.cover_image : getMediaUrl(course.cover_image)}
               alt={course.title}
               className="w-full h-full object-cover transition-all duration-500 group-hover:scale-105"
               onError={(e) => {

@@ -23,6 +23,7 @@ import AuthContext from '@/context/AuthContext'
 import { Switch } from '@/components/ui/switch'
 import axios from 'axios'
 import { toast } from 'sonner'
+import { config } from '@/lib/config'
 import Link from 'next/link'
 import {
   AlertDialog,
@@ -100,7 +101,7 @@ export default function EditBlogPostPage({ params }) {
     try {
       setLoading(true)
       const token = getAccessToken();
-      const response = await axios.get(`http://127.0.0.1:8000/api/blog/post/${id}/`, {
+      const response = await axios.get(config.API_BASE_URL + `blog/post/${id}/`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -165,7 +166,7 @@ export default function EditBlogPostPage({ params }) {
       }
 
       const token = getAccessToken();
-      const response = await axios.put(`http://127.0.0.1:8000/api/blog/post/${id}/`, formData, {
+      const response = await axios.put(config.API_BASE_URL + `blog/post/${id}/`, formData, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'multipart/form-data'
@@ -188,7 +189,7 @@ export default function EditBlogPostPage({ params }) {
     try {
       setDeleting(true)
       const token = getAccessToken();
-      const response = await axios.delete(`http://127.0.0.1:8000/api/blog/post/${id}/`, {
+      const response = await axios.delete(config.API_BASE_URL + `blog/post/${id}/`, {
         headers: {
           'Authorization': `Bearer ${token}`
         },

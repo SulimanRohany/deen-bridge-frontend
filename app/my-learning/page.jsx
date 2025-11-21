@@ -4,6 +4,7 @@ import { useContext, useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import AuthContext from '@/context/AuthContext'
 import { enrollmentAPI, courseAPI } from '@/lib/api'
+import { getMediaUrl } from '@/lib/config'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card'
@@ -1004,7 +1005,7 @@ function EnhancedCourseCard({ course }) {
           {/* Image with error handling */}
           {course.cover_image ? (
             <img 
-              src={course.cover_image.startsWith('http') ? course.cover_image : `http://127.0.0.1:8000${course.cover_image}`}
+              src={course.cover_image.startsWith('http') ? course.cover_image : getMediaUrl(course.cover_image)}
               alt={course.title}
               className="w-full h-full object-cover transition-all duration-500 group-hover:scale-105"
               onError={(e) => {

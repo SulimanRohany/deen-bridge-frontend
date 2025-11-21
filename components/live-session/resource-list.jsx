@@ -28,8 +28,9 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { toast } from "sonner"
+import { config } from "@/lib/config"
 
-const API_BASE_URL = 'http://127.0.0.1:8000/api'
+const API_BASE_URL = config.API_BASE_URL.replace(/\/$/, ''); // Remove trailing slash if present
 
 export default function ResourceList({ sessionId, canManage = false }) {
   const [resources, setResources] = useState([])

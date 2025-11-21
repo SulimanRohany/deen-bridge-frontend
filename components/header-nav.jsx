@@ -38,6 +38,7 @@ import {
 } from "@/components/ui/sheet"
 import AuthContext from '@/context/AuthContext'
 import { enrollmentAPI } from '@/lib/api'
+import { getMediaUrl } from '@/lib/config'
 import { ThemeToggle } from "@/components/theme-toggle"
 import NotificationBell from "@/components/notifications/NotificationBell"
 import NotificationDropdown from "@/components/notifications/NotificationDropdown"
@@ -302,7 +303,7 @@ export default function HeaderNav() {
                     <Button className="hidden md:flex relative h-9 w-9 rounded-full p-0 overflow-hidden">
                       {userData.profile_image ? (
                         <Image
-                          src={userData.profile_image.startsWith('http') ? userData.profile_image : `http://127.0.0.1:8000${userData.profile_image}`}
+                          src={userData.profile_image.startsWith('http') ? userData.profile_image : getMediaUrl(userData.profile_image)}
                           alt={userData.full_name || 'User'}
                           width={36}
                           height={36}
@@ -383,7 +384,7 @@ export default function HeaderNav() {
                   {userData.profile_image ? (
                     <div className="flex h-14 w-14 items-center justify-center rounded-full overflow-hidden shadow-md ring-2 ring-primary/20">
                       <Image
-                        src={userData.profile_image.startsWith('http') ? userData.profile_image : `http://127.0.0.1:8000${userData.profile_image}`}
+                        src={userData.profile_image.startsWith('http') ? userData.profile_image : getMediaUrl(userData.profile_image)}
                         alt={userData.full_name || 'User'}
                         width={56}
                         height={56}

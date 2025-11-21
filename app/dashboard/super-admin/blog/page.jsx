@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import axios from 'axios'
 import { useDebounce } from '@/hooks/use-debounce'
+import { config } from '@/lib/config'
 import Pagination from '@/components/Pagination'
 import { 
   IconPlus, 
@@ -96,7 +97,7 @@ export default function AdminBlogPage() {
     try {
       setLoading(true)
       const token = getAccessToken();
-      const response = await axios.get('http://127.0.0.1:8000/api/blog/post/', {
+      const response = await axios.get(config.API_BASE_URL + 'blog/post/', {
         params: {
           page: currentPage,
           page_size: pageSize,
@@ -178,7 +179,7 @@ export default function AdminBlogPage() {
     const token = getAccessToken();
 
     try {
-      await axios.delete(`http://127.0.0.1:8000/api/blog/post/${id}/`, {
+      await axios.delete(config.API_BASE_URL + `blog/post/${id}/`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -200,7 +201,7 @@ export default function AdminBlogPage() {
   const updatePostStatus = async (id, status) => {
     try {
       const token = getAccessToken();
-      await axios.patch(`http://127.0.0.1:8000/api/blog/post/${id}/`, {
+      await axios.patch(config.API_BASE_URL + `blog/post/${id}/`, {
         status: status === 'publish' ? 'published' : 'draft'
       }, {
         headers: {

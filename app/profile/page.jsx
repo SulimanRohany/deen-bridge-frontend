@@ -4,6 +4,7 @@ import { useContext, useEffect, useState, useRef, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import AuthContext from '@/context/AuthContext'
 import { profileAPI, userAPI, enrollmentAPI, courseAPI } from '@/lib/api'
+import { getMediaUrl } from '@/lib/config'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -120,7 +121,7 @@ export default function ProfilePage() {
           // Construct the full URL for the profile image
           const imageUrl = profileData.profile_image.startsWith('http') 
             ? profileData.profile_image 
-            : `http://127.0.0.1:8000${profileData.profile_image}`
+            : getMediaUrl(profileData.profile_image)
           setImagePreview(imageUrl)
         }
       }
@@ -290,7 +291,7 @@ export default function ProfilePage() {
         // Construct the full URL for the profile image
         const imageUrl = profile.profile_image.startsWith('http') 
           ? profile.profile_image 
-          : `http://127.0.0.1:8000${profile.profile_image}`
+          : getMediaUrl(profile.profile_image)
         setImagePreview(imageUrl)
       } else {
         setImagePreview(null)

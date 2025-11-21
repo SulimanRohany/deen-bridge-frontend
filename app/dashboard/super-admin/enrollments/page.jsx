@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
 import { useDebounce } from '@/hooks/use-debounce';
+import { config } from '@/lib/config';
 import Pagination from '@/components/Pagination';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -133,7 +134,7 @@ export default function EnrollmentsPage() {
   const getApiInstance = () => {
     const token = getAccessToken();
     return axios.create({
-      baseURL: 'http://127.0.0.1:8000/api/',
+      baseURL: config.API_BASE_URL,
       headers: {
         'Content-Type': 'application/json',
         Authorization: token ? `Bearer ${token}` : '',

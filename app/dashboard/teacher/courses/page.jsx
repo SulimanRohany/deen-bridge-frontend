@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 import { useDebounce } from '@/hooks/use-debounce';
+import { config } from '@/lib/config';
 import Pagination from '@/components/Pagination';
 import { 
   IconBook, 
@@ -109,7 +110,7 @@ export default function TeacherCoursesPage() {
       }
       
       // Fetch classes where the teacher is assigned
-      const response = await axios.get('http://127.0.0.1:8000/api/course/', {
+      const response = await axios.get(config.API_BASE_URL + 'course/', {
         headers: {
           'Authorization': `Bearer ${token}`,
         },

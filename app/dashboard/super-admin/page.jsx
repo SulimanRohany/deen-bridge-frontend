@@ -5,6 +5,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
+import { config } from '@/lib/config';
 import { 
   IconUsers, 
   IconSchool, 
@@ -61,7 +62,7 @@ export default function SuperAdminDashboard() {
       const parsedTokens = JSON.parse(authTokens);
       const token = parsedTokens.access;
       
-      const response = await axios.get('http://127.0.0.1:8000/api/dashboard/report/', {
+      const response = await axios.get(config.API_BASE_URL + 'dashboard/report/', {
         headers: {
           'Authorization': `Bearer ${token}`,
         },

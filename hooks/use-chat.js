@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from './use-auth';
+import { config } from '@/lib/config';
 
 /**
  * Custom hook for real-time chat in live sessions using WebSocket
@@ -32,8 +33,22 @@ export function useChat(sessionId, options = {}) {
       return null;
     }
     
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const host = 'localhost:8000'; // Django backend
+    // Extract host from WS_BASE_URL (e.g., ws://127.0.0.1:8000 -> 127.0.0.1:8000)
+    // Or use the protocol from current location if in production
+    const wsBaseUrl = config.WS_BASE_URL;
+    let wsUrl;
+    
+    // If WS_BASE_URL is a full URL (starts with ws:// or wss://), extract host
+    if (wsBaseUrl.startsWith('ws://') || wsBaseUrl.startsWith('wss://')) {
+      const url = new URL(wsBaseUrl);
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      wsUrl = `${protocol}//${url.host}/ws/sessions/${sessionId}/chat/`;
+    } else {
+      // If it's just a host, use it directly
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      wsUrl = `${protocol}//${wsBaseUrl}/ws/sessions/${sessionId}/chat/`;
+    }
+    
     const token = authTokens?.access || '';
     
     if (!token) {
@@ -41,10 +56,10 @@ export function useChat(sessionId, options = {}) {
     }
     
     // Include token in URL for authentication
-    const wsUrl = `${protocol}//${host}/ws/sessions/${sessionId}/chat/?token=${token}`;
-    console.log('🔗 Chat WebSocket URL:', wsUrl.replace(token, 'TOKEN_HIDDEN'));
+    const finalWsUrl = `${wsUrl}?token=${token}`;
+    console.log('🔗 Chat WebSocket URL:', finalWsUrl.replace(token, 'TOKEN_HIDDEN'));
     
-    return wsUrl;
+    return finalWsUrl;
   }, [sessionId, authTokens]);
   
   /**
@@ -375,8 +390,9 @@ export function useChat(sessionId, options = {}) {
     }
     
     try {
+      const { config } = await import('@/lib/config');
       const response = await fetch(
-        `http://localhost:8000/api/chat/messages/session/${sessionId}/unread-count/`,
+        config.API_BASE_URL + `chat/messages/session/${sessionId}/unread-count/`,
         {
           headers: {
             'Authorization': `Bearer ${authTokens.access}`,

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 import { useDebounce } from '@/hooks/use-debounce';
+import { config } from '@/lib/config';
 import { 
   IconCalendarEvent,
   IconClock,
@@ -151,7 +152,7 @@ export default function TeacherSessionsPage() {
   const getApiInstance = () => {
     const token = getAccessToken();
     return axios.create({
-      baseURL: 'http://127.0.0.1:8000/api/',
+      baseURL: config.API_BASE_URL,
       headers: {
         'Content-Type': 'application/json',
         Authorization: token ? `Bearer ${token}` : '',
@@ -441,7 +442,7 @@ export default function TeacherSessionsPage() {
       
       // Fetch enrollments for this session
       const enrollmentsResponse = await axios.get(
-        `http://127.0.0.1:8000/api/course/session/${sessionId}/enrollments/`,
+        config.API_BASE_URL + `course/session/${sessionId}/enrollments/`,
         {
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -453,7 +454,7 @@ export default function TeacherSessionsPage() {
       
       // Fetch existing attendance records for this session
       const attendanceResponse = await axios.get(
-        'http://127.0.0.1:8000/api/course/attendance/',
+        config.API_BASE_URL + 'course/attendance/',
         {
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -514,7 +515,7 @@ export default function TeacherSessionsPage() {
       const token = parsedTokens.access;
       
       const api = axios.create({
-        baseURL: 'http://127.0.0.1:8000/api/course/',
+        baseURL: config.API_BASE_URL + 'course/',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',

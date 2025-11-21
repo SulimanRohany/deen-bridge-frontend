@@ -62,6 +62,7 @@ import {
   IconChartLine,
 } from '@tabler/icons-react'
 import { enrollmentAPI, courseAPI } from '@/lib/api'
+import { config, getMediaUrl } from '@/lib/config'
 
 function toArray(v) {
   console.log('🔄 toArray function called with:', v)
@@ -1042,8 +1043,8 @@ export default function Home() {
       
       console.log('📡 Making API request to enrollmentAPI.getEnrollments()')
       console.log('📡 API function:', enrollmentAPI.getEnrollments)
-      console.log('📡 API base URL:', 'http://127.0.0.1:8000/api/')
-      console.log('📡 Full URL will be: http://127.0.0.1:8000/api/enrollment/')
+      console.log('📡 API base URL:', config.API_BASE_URL)
+      console.log('📡 Full URL will be:', config.API_BASE_URL + 'enrollment/')
       console.log('📡 Filtering by student ID:', userData.id)
       
       const enrollmentsData = await enrollmentAPI.getEnrollments({ student: userData.id })
@@ -1172,12 +1173,48 @@ export default function Home() {
     try {
       console.log('🎯 Fetching recommended courses...')
       const response = await courseAPI.getCourses({ page_size: 6 })
-      const courses = response.data?.results || response.data || []
+      
+      // Handle both paginated and non-paginated responses
+      let courses = []
+      if (response?.data) {
+        if (Array.isArray(response.data)) {
+          // Non-paginated response (array directly)
+          courses = response.data
+        } else if (response.data.results && Array.isArray(response.data.results)) {
+          // Paginated response
+          courses = response.data.results
+        } else if (Array.isArray(response.data)) {
+          // Fallback: data is an array
+          courses = response.data
+        }
+      }
+      
       console.log(`✅ Loaded ${courses.length} recommended courses`)
       setRecommendedCourses(courses)
     } catch (error) {
-      console.error('❌ Error loading recommended courses:', error)
-      setRecommendedCourses([])
+      // Handle network errors and other errors gracefully
+      // Suppress error logging for expected cases (no courses, network issues)
+      if (error.code === 'ERR_NETWORK' || error.message === 'Network Error' || !error.response) {
+        // Network error - backend might be down or unreachable
+        // This is expected when backend is not running or no courses exist
+        setRecommendedCourses([])
+      } else if (error.response) {
+        // Server responded with an error status
+        if (error.response.status === 404 || error.response.status === 400) {
+          // 404 or 400 might mean no courses exist - handle gracefully
+          setRecommendedCourses([])
+        } else if (error.response.status >= 500) {
+          // Server errors - log but don't break the UI
+          console.error('❌ Server error loading recommended courses:', error.response.status)
+          setRecommendedCourses([])
+        } else {
+          // Other client errors - handle gracefully
+          setRecommendedCourses([])
+        }
+      } else {
+        // Other errors - handle gracefully
+        setRecommendedCourses([])
+      }
     } finally {
       setLoadingRecommended(false)
     }
@@ -3035,7 +3072,7 @@ export default function Home() {
                       <div className="relative h-60 overflow-hidden bg-gradient-to-br from-primary/5 via-secondary/5 to-accent/5">
                         {course.cover_image ? (
                           <img 
-                            src={course.cover_image.startsWith('http') ? course.cover_image : `http://127.0.0.1:8000${course.cover_image}`}
+                            src={course.cover_image.startsWith('http') ? course.cover_image : getMediaUrl(course.cover_image)}
                             alt={course.title}
                             className="w-full h-full object-cover transition-all duration-700 group-hover:brightness-110"
                             onError={(e) => {
