@@ -30,6 +30,7 @@ export default function VideoConference() {
   const chatRef = useRef(null)
   const [userRole, setUserRole] = useState('member') // Track user role (member or moderator)
   const [isObserverMode, setIsObserverMode] = useState(false) // Track if user is in observer mode (super admin monitoring)
+  const hasAttemptedJoinRef = useRef(false) // Track if join has been attempted to prevent duplicates
   
   // Check if screen sharing is supported
   const isScreenShareSupported = typeof navigator !== 'undefined' && 
@@ -187,10 +188,11 @@ export default function VideoConference() {
     }
     
     const joinSession = async () => {
-      // Don't rejoin if we're leaving or already joining
+      // Don't rejoin if we're leaving or already joining or already attempted
       // Also check that we have userData (required for join API call)
-      if (sessionId && isConnected && !isInRoom && !isJoiningRef.current && !isLeavingRef.current && userData?.id && authTokens?.access) {
+      if (sessionId && isConnected && !isInRoom && !isJoiningRef.current && !isLeavingRef.current && !hasAttemptedJoinRef.current && userData?.id && authTokens?.access) {
         isJoiningRef.current = true
+        hasAttemptedJoinRef.current = true // Mark that we've attempted to join
         try {
           if (process.env.NODE_ENV === 'development') {
             console.log('Attempting to join session:', { sessionId, userId: userData?.id });
@@ -317,6 +319,8 @@ export default function VideoConference() {
           }
           
           setError(errorMessage)
+          // Reset the attempt flag on error so user can retry
+          hasAttemptedJoinRef.current = false
         } finally {
           isJoiningRef.current = false
         }
@@ -325,6 +329,11 @@ export default function VideoConference() {
     
     joinSession()
   }, [sessionId, isConnected, isInRoom, userData?.id, authTokens?.access, authLoading, joinRoom, startMedia, sessionTracking])
+  
+  // Reset join attempt flag when sessionId changes (user navigates to different session)
+  useEffect(() => {
+    hasAttemptedJoinRef.current = false
+  }, [sessionId])
 
   const handleLeaveCall = async () => {
     try {
