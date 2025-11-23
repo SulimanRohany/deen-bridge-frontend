@@ -198,14 +198,23 @@ export function useChat(sessionId, options = {}) {
       };
       
       ws.onerror = (event) => {
-        console.error('❌ Chat WebSocket error event:', {
-          type: event.type,
-          target: event.target,
-          readyState: event.target?.readyState,
-          url: event.target?.url,
-        });
-        setError('Connection error occurred. Please check if the backend server is running.');
-        options.onError?.('Connection error occurred');
+        // WebSocket error events don't always have detailed information
+        const errorInfo = {
+          type: event?.type || 'unknown',
+          readyState: event?.target?.readyState ?? 'unknown',
+          url: event?.target?.url ? event.target.url.replace(/token=[^&]*/, 'token=HIDDEN') : 'unknown',
+        };
+        
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Chat WebSocket error event:', errorInfo);
+        }
+        
+        // Only set error if we're not already connected (to avoid overwriting successful connections)
+        if (!isConnected) {
+          const errorMsg = 'Chat connection failed. Please ensure the Django server is running with an ASGI server (daphne or uvicorn) for WebSocket support. Regular runserver does not support WebSockets.';
+          setError(errorMsg);
+          options.onError?.(errorMsg);
+        }
       };
       
       ws.onclose = (event) => {
@@ -215,16 +224,32 @@ export function useChat(sessionId, options = {}) {
           wasClean: event.wasClean,
         });
         
-        // Log specific close codes for debugging
+        // Log specific close codes for debugging (always log errors)
         if (event.code === 1006) {
-          console.error('❌ WebSocket closed abnormally (1006) - possible causes:');
-          console.error('  - Backend server not running');
-          console.error('  - Network connection issues');
-          console.error('  - CORS or authentication problems');
+          const errorMsg = 'WebSocket connection failed. The Django server must be running with an ASGI server (daphne or uvicorn) to support WebSockets. Regular runserver does not support WebSockets.';
+          console.error('WebSocket closed abnormally (1006):', errorMsg);
+          if (process.env.NODE_ENV === 'development') {
+            console.error('  - Backend server not running with ASGI server');
+            console.error('  - Network connection issues');
+            console.error('  - CORS or authentication problems');
+            console.error('  - Run: daphne -b 0.0.0.0 -p 8000 backend.asgi:application');
+          }
+          if (!isConnected) {
+            setError(errorMsg);
+            options.onError?.(errorMsg);
+          }
         } else if (event.code === 4001) {
-          console.error('❌ WebSocket closed: Unauthorized (4001)');
+          const errorMsg = 'WebSocket authentication failed. Please log in again.';
+          console.error('WebSocket closed: Unauthorized (4001)');
+          setError(errorMsg);
+          options.onError?.(errorMsg);
         } else if (event.code === 4002) {
-          console.error('❌ WebSocket closed: Connection error (4002)');
+          const errorMsg = 'WebSocket connection error occurred.';
+          console.error('WebSocket closed: Connection error (4002)');
+          if (!isConnected) {
+            setError(errorMsg);
+            options.onError?.(errorMsg);
+          }
         }
         
         setIsConnected(false);

@@ -18,7 +18,7 @@ export default function VideoConference() {
   const router = useRouter()
   const sessionId = params.sessionId
   const courseId = params.id
-  const { userData } = useAuth()
+  const { userData, authTokens, loading: authLoading } = useAuth()
   const [isInCall, setIsInCall] = useState(false)
   const [roomId, setRoomId] = useState(null)
   const [isChatOpen, setIsChatOpen] = useState(false)
@@ -32,7 +32,9 @@ export default function VideoConference() {
   const [isObserverMode, setIsObserverMode] = useState(false) // Track if user is in observer mode (super admin monitoring)
   
   // Check if screen sharing is supported
-  const isScreenShareSupported = navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia
+  const isScreenShareSupported = typeof navigator !== 'undefined' && 
+    navigator.mediaDevices && 
+    navigator.mediaDevices.getDisplayMedia
 
   // Setup media stream
   const sessionTracking = useSessionTracking(roomId || sessionId)
@@ -68,14 +70,30 @@ export default function VideoConference() {
     }
   })
 
-  // Connect to SFU when component mounts (only once)
+  // Connect to SFU when SFU client is ready and auth tokens are available
   useEffect(() => {
-    if (!isConnected && !isConnecting && !hasConnectedRef.current) {
-      hasConnectedRef.current = true;
-      console.log('Connecting to SFU...');
-      connect();
+    // Wait for auth to finish loading before attempting connection
+    if (authLoading) {
+      return;
     }
-  }, []); // Empty dependency array to run only once
+    
+    // Wait for SFU client to be created (it needs auth tokens first)
+    // The useSFU hook will handle connection automatically when tokens are available
+    // But we can also manually trigger if needed
+    if (!isConnected && !isConnecting && !hasConnectedRef.current) {
+      // Use authTokens from context (more reliable than localStorage)
+      if (authTokens?.access && userData?.id) {
+        hasConnectedRef.current = true;
+        if (process.env.NODE_ENV === 'development') {
+          console.log('Connecting to SFU...');
+        }
+        connect().catch((error) => {
+          console.error('SFU connection failed:', error);
+          hasConnectedRef.current = false; // Allow retry
+        });
+      }
+    }
+  }, [isConnected, isConnecting, authTokens?.access, userData?.id, authLoading, connect]);
 
   // Refs to track latest values without causing re-renders
   const isInRoomRef = useRef(isInRoom)
@@ -100,7 +118,9 @@ export default function VideoConference() {
       // This handles browser tab/window close or refresh
       // Use refs to get latest values
       if (isInRoomRef.current || isInCallRef.current) {
-        console.log('⚠️ Page is unloading, cleaning up session...');
+        if (process.env.NODE_ENV === 'development') {
+          console.log('Page is unloading, cleaning up session...');
+        }
         
         // Use synchronous cleanup for beforeunload
         // Send beacon to ensure server gets the leave message
@@ -130,7 +150,9 @@ export default function VideoConference() {
 
     // Cleanup function for component unmount (navigation within app)
     return () => {
-      console.log('🧹 Session page unmounting - cleaning up...');
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Session page unmounting - cleaning up...');
+      }
       window.removeEventListener('beforeunload', handleBeforeUnload);
       
       // Set leaving flag to prevent any rejoin attempts during cleanup
@@ -140,7 +162,9 @@ export default function VideoConference() {
       // Use refs to get latest values
       // If we're in a call/room when unmounting, clean up
       if (isInRoomRef.current || isInCallRef.current) {
-        console.log('🚪 User navigating away from session, leaving room...');
+        if (process.env.NODE_ENV === 'development') {
+          console.log('User navigating away from session, leaving room...');
+        }
         
         // Call async cleanup but don't wait
         (async () => {
@@ -155,58 +179,36 @@ export default function VideoConference() {
     };
   }, [sessionId]) // Only sessionId in dependencies - effect runs once on mount
 
-  // Debug logging
-  useEffect(() => {
-    console.log('Video Conference State:', {
-      isInCall,
-      isInRoom,
-      isConnected,
-      isConnecting,
-      participantsCount: participants.length,
-      participants: participants.map(p => ({ id: p.id, name: p.name })),
-      remoteStreamsCount: remoteStreams.size,
-      localStream: !!localStream,
-    })
-  }, [isInCall, isInRoom, isConnected, isConnecting, participants, localStream, remoteStreams])
-
-
   // Join session after SFU is connected
   useEffect(() => {
+    // Wait for auth to finish loading
+    if (authLoading) {
+      return;
+    }
+    
     const joinSession = async () => {
       // Don't rejoin if we're leaving or already joining
-      if (sessionId && isConnected && !isInRoom && !isJoiningRef.current && !isLeavingRef.current) {
+      // Also check that we have userData (required for join API call)
+      if (sessionId && isConnected && !isInRoom && !isJoiningRef.current && !isLeavingRef.current && userData?.id && authTokens?.access) {
         isJoiningRef.current = true
         try {
-          console.log('Attempting to join session:', { 
-            sessionId, 
-            sessionIdType: typeof sessionId,
-            userData: userData?.id,
-            userDataKeys: userData ? Object.keys(userData) : 'null'
-          })
+          if (process.env.NODE_ENV === 'development') {
+            console.log('Attempting to join session:', { sessionId, userId: userData?.id });
+          }
           
           // Check if user is authenticated
-          if (!userData?.id) {
+          if (!userData?.id || !authTokens?.access) {
             throw new Error('User not authenticated. Please log in again.')
           }
           
-          // Call the backend session join API
-          const authTokens = localStorage.getItem('authTokens')
-          if (!authTokens) {
-            throw new Error('Authentication tokens not found. Please log in again.')
-          }
-          
-          const tokens = JSON.parse(authTokens)
+          // Use tokens from context (already parsed)
+          const tokens = authTokens
           
           // Detect if user is super admin and determine endpoint
           const isSuperAdmin = userData?.role === 'super_admin'
           const endpoint = isSuperAdmin 
             ? config.API_BASE_URL + `course/session/${sessionId}/monitor/`
             : config.API_BASE_URL + `course/session/${sessionId}/join/`
-          
-          console.log('User type:', isSuperAdmin ? 'Super Admin (Observer)' : 'Regular User', {
-            userRole: userData?.role,
-            isSuperAdmin
-          })
           
           const response = await fetch(endpoint, {
             method: 'POST',
@@ -225,7 +227,9 @@ export default function VideoConference() {
           }
           
           const sessionData = await response.json()
-          console.log('Session join response:', sessionData)
+          if (process.env.NODE_ENV === 'development') {
+            console.log('Session join response:', sessionData);
+          }
           
           // Extract room ID and user role from the session data
           // Convert to string since SFU server expects string IDs
@@ -237,8 +241,6 @@ export default function VideoConference() {
           setUserRole(role) // Store role for later use
           setIsObserverMode(isHidden) // Set observer mode if user is hidden
           
-          console.log('Joining SFU room:', { actualRoomId, displayName, role, isObserverMode: isHidden })
-          
           // Set the room ID for the session
           setRoomId(actualRoomId)
           
@@ -246,34 +248,53 @@ export default function VideoConference() {
           sessionTracking.startSession()
           
           // Join the SFU room with the actual room ID, role, and observer flag
-          console.log('Calling joinRoom...');
           const joinResult = await joinRoom(actualRoomId, displayName, { 
             role,
             isHidden // Pass hidden flag to SFU
           });
-          console.log('joinRoom completed:', joinResult);
           
           // Wait a bit longer to ensure room join is fully processed
-          console.log('Waiting for room join to complete...');
           await new Promise(resolve => setTimeout(resolve, 800));
           
           // Only start media if NOT in observer mode
           if (!isHidden) {
-            console.log('Calling startMedia...');
-            await startMedia();
-            console.log('startMedia completed');
-          } else {
-            console.log('Observer mode - skipping media start (no camera/mic)');
+            try {
+              await startMedia();
+            } catch (mediaError) {
+              if (process.env.NODE_ENV === 'development') {
+                console.error('Failed to start media:', mediaError);
+              }
+              
+              // Handle non-secure context gracefully
+              if (mediaError.message === 'MEDIA_NOT_AVAILABLE_NON_SECURE') {
+                // Don't set error - user can still participate without camera/mic
+                // This is expected behavior for IP addresses (not localhost)
+              } else if (mediaError.message?.includes('getUserMedia') || mediaError.message?.includes('not available')) {
+                // Check if it's a non-secure context issue
+                const isNonSecure = window.location.hostname !== 'localhost' && 
+                                  window.location.hostname !== '127.0.0.1' && 
+                                  window.location.protocol !== 'https:';
+                
+                if (!isNonSecure) {
+                  setError('Camera and microphone access is required for video conferencing. ' +
+                    'Please allow camera/microphone permissions and ensure you are using a secure connection (HTTPS or localhost).');
+                }
+                // For non-secure connections, silently continue without media
+              } else {
+                setError(mediaError.message || 'Failed to start camera/microphone. You can still join the session.');
+              }
+              // Continue anyway - user can join without media
+            }
           }
           
           setIsInCall(true)
-          console.log('Successfully joined session')
         } catch (error) {
           console.error("Failed to join session:", {
             message: error.message,
             originalError: error.originalError,
             response: error.response,
-            status: error.status || error.response?.status
+            status: error.status || error.response?.status,
+            stack: error.stack
           })
           
           // Provide more specific error messages
@@ -289,6 +310,10 @@ export default function VideoConference() {
             errorMessage = "Authentication failed. Please log in again."
           } else if (error.message?.includes('full')) {
             errorMessage = "Session is full. Please try again later."
+          } else if (error.message?.includes('WebSocket') || error.message?.includes('SFU')) {
+            errorMessage = `Connection error: ${error.message}. Please ensure the SFU server is running.`
+          } else if (error.message) {
+            errorMessage = error.message
           }
           
           setError(errorMessage)
@@ -299,11 +324,13 @@ export default function VideoConference() {
     }
     
     joinSession()
-  }, [sessionId, isConnected, isInRoom, userData])
+  }, [sessionId, isConnected, isInRoom, userData?.id, authTokens?.access, authLoading, joinRoom, startMedia, sessionTracking])
 
   const handleLeaveCall = async () => {
     try {
-      console.log('User is leaving the call...')
+      if (process.env.NODE_ENV === 'development') {
+        console.log('User is leaving the call...');
+      }
       
       // Set leaving flag to prevent rejoin attempts
       isLeavingRef.current = true
@@ -322,7 +349,9 @@ export default function VideoConference() {
       // End session tracking
       sessionTracking.endSession()
       
-      console.log('Call ended successfully, redirecting...')
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Call ended successfully, redirecting...');
+      }
       
       // Redirect based on user role
       if (userData?.role === 'super_admin') {
@@ -360,6 +389,13 @@ export default function VideoConference() {
   }
 
 
+  // Redirect to login if not authenticated after loading completes
+  useEffect(() => {
+    if (!authLoading && !userData?.id && !authTokens?.access) {
+      router.push('/login');
+    }
+  }, [authLoading, userData?.id, authTokens?.access, router]);
+
   if (error) {
     return (
       <div className="fixed inset-0 flex items-center justify-center bg-gradient-to-br from-red-50 to-red-100 dark:from-gray-900 dark:to-gray-800">
@@ -385,9 +421,18 @@ export default function VideoConference() {
             {isConnecting ? 'Establishing connection to video server...' : 'Please wait while we connect you to the live class.'}
           </p>
           {!isConnected && (
-            <div className="text-sm text-gray-500 dark:text-gray-400">
+            <div className="text-sm text-gray-500 dark:text-gray-400 space-y-1">
               <p>SFU Status: {isConnecting ? 'Connecting...' : 'Not Connected'}</p>
-              <p>Room ID: {roomId}</p>
+              <p>Room ID: {roomId || 'Waiting for session...'}</p>
+              <p className="text-xs mt-2">
+                {authLoading && 'Loading...'}
+                {!authLoading && !userData?.id && 'Please log in to join the session.'}
+                {!authLoading && userData?.id && !isConnecting && !isConnected && 'Connecting to video server...'}
+                {isConnecting && 'Establishing connection...'}
+              </p>
+              {error && (
+                <p className="text-red-500 dark:text-red-400 mt-2">Error: {error}</p>
+              )}
             </div>
           )}
         </Card>

@@ -29,6 +29,7 @@ export function useSFU(options = {}) {
   const videoProducerRef = useRef(null);
   const screenProducerRef = useRef(null);
   const consumersRef = useRef(new Map());
+  const hasAttemptedConnectionRef = useRef(false); // Track connection attempts
 
   const sfuUrl = options.sfuUrl || config.SFU_URL;
 
@@ -41,24 +42,32 @@ export function useSFU(options = {}) {
 
     // Wait for auth tokens and user data to be available
     if (!authTokens?.access || !userData?.id) {
-      console.log('Waiting for auth tokens and user data...');
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Waiting for auth tokens and user data...');
+      }
       return;
     }
 
     // Create client with available data
-    console.log('Creating SFU client...');
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Creating SFU client...');
+    }
 
     const config = {
       sfuUrl,
       token: authTokens?.access || '',
       userId: userData?.id || '',
       onConnected: () => {
-        console.log('SFU Connected');
+        if (process.env.NODE_ENV === 'development') {
+          console.log('SFU Connected');
+        }
         setIsConnected(true);
         setIsConnecting(false);
       },
       onDisconnected: () => {
-        console.log('⚠️ SFU Disconnected - clearing all state');
+        if (process.env.NODE_ENV === 'development') {
+          console.log('SFU Disconnected - clearing all state');
+        }
         setIsConnected(false);
         setIsInRoom(false);
         setCurrentRoom(null);
@@ -397,11 +406,18 @@ export function useSFU(options = {}) {
   }, [authTokens?.access, userData?.id, sfuUrl]); // Run when auth tokens or user data become available
 
   const connect = useCallback(async () => {
-    if (!sfuClientRef.current) return;
+    if (!sfuClientRef.current) {
+      console.warn('⚠️ Cannot connect: SFU client not initialized yet');
+      return;
+    }
     
     // Prevent multiple connection attempts
     if (isConnected || isConnecting) {
-      console.log('Already connected or connecting to SFU');
+      console.log('Already connected or connecting to SFU', {
+        isConnected,
+        isConnecting,
+        wsState: sfuClientRef.current?.ws?.readyState
+      });
       return;
     }
 
@@ -413,27 +429,74 @@ export function useSFU(options = {}) {
     }
 
     try {
-      console.log('Starting SFU connection...');
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Starting SFU connection...');
+      }
       setIsConnecting(true);
       sfuClientRef.current.lastConnectionAttempt = now;
-      await sfuClientRef.current.connect();
-      console.log('SFU connection successful');
+      
+      // Add timeout for connection (10 seconds)
+      const connectionPromise = sfuClientRef.current.connect();
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => {
+          reject(new Error(`SFU connection timeout after 10 seconds. Please ensure the SFU server is running on ${sfuUrl}`));
+        }, 10000);
+      });
+      
+      await Promise.race([connectionPromise, timeoutPromise]);
+      if (process.env.NODE_ENV === 'development') {
+        console.log('SFU connection successful');
+      }
     } catch (error) {
-      console.error('Failed to connect to SFU:', error);
-      options.onError?.(error);
+      console.error('❌ Failed to connect to SFU:', error);
       setIsConnecting(false);
+      options.onError?.(error);
+      
+      // Reset connection attempt flag to allow retry
+      if (sfuClientRef.current) {
+        sfuClientRef.current.lastConnectionAttempt = null;
+      }
     }
-  }, [isConnected, isConnecting, options]);
+  }, [isConnected, isConnecting, options, sfuUrl, authTokens?.access, userData?.id]);
 
   // Handle connection when auth tokens become available
-  const hasAttemptedConnectionRef = useRef(false);
   useEffect(() => {
-    if (sfuClientRef.current && authTokens?.access && userData?.id && !isConnected && !isConnecting && !hasAttemptedConnectionRef.current) {
-      hasAttemptedConnectionRef.current = true;
-      console.log('Auth tokens available, attempting to connect...');
-      connect();
+    // Check localStorage as fallback if context tokens aren't loaded yet
+    let token = authTokens?.access;
+    let userId = userData?.id;
+    
+    if (!token || !userId) {
+      try {
+        const storedTokens = typeof window !== 'undefined' ? localStorage.getItem('authTokens') : null;
+        if (storedTokens) {
+          const parsed = JSON.parse(storedTokens);
+          token = parsed?.access;
+        }
+      } catch (e) {
+        // Ignore localStorage errors
+      }
     }
-  }, [authTokens?.access, userData?.id, isConnected, isConnecting]);
+    
+    // Only attempt connection if:
+    // 1. SFU client exists
+    // 2. Auth tokens are available (from context or localStorage)
+    // 3. User data is available
+    // 4. Not already connected or connecting
+    // 5. Haven't attempted connection yet
+      if (sfuClientRef.current && token && userId && !isConnected && !isConnecting && !hasAttemptedConnectionRef.current) {
+        hasAttemptedConnectionRef.current = true;
+        if (process.env.NODE_ENV === 'development') {
+          console.log('Auth tokens and user data available, attempting SFU connection...');
+        }
+        connect().catch((error) => {
+          console.error('SFU connection failed:', error);
+          // Reset flag to allow retry after a delay
+          setTimeout(() => {
+            hasAttemptedConnectionRef.current = false;
+          }, 5000); // Retry after 5 seconds
+        });
+      }
+  }, [authTokens?.access, userData?.id, isConnected, isConnecting, connect]);
 
   const disconnect = useCallback(async () => {
     if (!sfuClientRef.current) return;
@@ -835,10 +898,92 @@ export function useSFU(options = {}) {
         isConnected: sfuClientRef.current.isConnected
       });
       
+      // Check if getUserMedia is available
+      if (typeof window === 'undefined') {
+        throw new Error('Media access is only available in the browser environment.');
+      }
+      
+      if (typeof navigator === 'undefined') {
+        throw new Error('Navigator API is not available. Please use a modern browser.');
+      }
+      
+      // Check if we're in a secure context (required for getUserMedia)
+      const isSecureContext = window.isSecureContext || 
+        window.location.protocol === 'https:' || 
+        window.location.hostname === 'localhost' || 
+        window.location.hostname === '127.0.0.1';
+      
+      if (!navigator.mediaDevices) {
+        // Try to polyfill for older browsers
+        if (navigator.getUserMedia) {
+          // Legacy API - convert to Promise-based
+          navigator.mediaDevices = {
+            getUserMedia: (constraints) => {
+              return new Promise((resolve, reject) => {
+                navigator.getUserMedia(constraints, resolve, reject);
+              });
+            }
+          };
+        } else {
+          // If not in secure context, allow joining without media
+          if (!isSecureContext) {
+            console.warn('⚠️ Not in secure context - media access unavailable. User can join without camera/mic.');
+            throw new Error('MEDIA_NOT_AVAILABLE_NON_SECURE');
+          }
+          
+          const errorMsg = 'Camera and microphone access is not available. ' +
+            'Please ensure you are using a secure connection (HTTPS or localhost) and a modern browser that supports WebRTC.';
+          console.error(errorMsg, {
+            hasNavigator: true,
+            hasMediaDevices: false,
+            hasGetUserMedia: !!navigator.getUserMedia,
+            isSecureContext,
+            protocol: window.location.protocol,
+            hostname: window.location.hostname,
+            userAgent: navigator.userAgent
+          });
+          throw new Error(errorMsg);
+        }
+      }
+      
+      if (!navigator.mediaDevices.getUserMedia) {
+        // If not in secure context, allow joining without media
+        if (!isSecureContext) {
+          console.warn('⚠️ Not in secure context - getUserMedia unavailable. User can join without camera/mic.');
+          throw new Error('MEDIA_NOT_AVAILABLE_NON_SECURE');
+        }
+        
+        const errorMsg = 'getUserMedia is not available. ' +
+          'Please ensure you are using a secure connection (HTTPS or localhost) and a modern browser.';
+        console.error(errorMsg, {
+          hasNavigator: true,
+          hasMediaDevices: true,
+          hasGetUserMedia: false,
+          isSecureContext,
+          protocol: window.location.protocol,
+          hostname: window.location.hostname
+        });
+        throw new Error(errorMsg);
+      }
+      
       // Stop existing stream if any
       if (localStreamRef.current) {
         console.log('Stopping existing stream...');
         localStreamRef.current.getTracks().forEach(track => track.stop());
+      }
+
+      // Final check before calling getUserMedia
+      if (!navigator.mediaDevices || typeof navigator.mediaDevices.getUserMedia !== 'function') {
+        const errorMsg = 'getUserMedia is not available. ' +
+          'Please ensure you are using a secure connection (HTTPS or localhost) and a modern browser that supports WebRTC.';
+        console.error('getUserMedia check failed:', {
+          hasMediaDevices: !!navigator.mediaDevices,
+          getUserMediaType: typeof navigator.mediaDevices?.getUserMedia,
+          isSecureContext: window.isSecureContext,
+          protocol: window.location.protocol,
+          userAgent: navigator.userAgent
+        });
+        throw new Error(errorMsg);
       }
 
       // Get user media
@@ -1012,6 +1157,15 @@ export function useSFU(options = {}) {
       } else {
         // Start screen sharing
         console.log('Starting screen share...');
+        
+        // Check if getDisplayMedia is available
+        if (typeof navigator === 'undefined' || !navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {
+          const errorMsg = 'Screen sharing is not available. ' +
+            'Please ensure you are using a secure connection (HTTPS or localhost) and a modern browser.';
+          console.error(errorMsg);
+          throw new Error(errorMsg);
+        }
+        
         const screenStream = await navigator.mediaDevices.getDisplayMedia({
           video: true,
           audio: true
