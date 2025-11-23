@@ -102,6 +102,8 @@ export default function VideoConference() {
   const roomIdRef = useRef(roomId)
   const leaveRoomRef = useRef(leaveRoom)
   const sessionTrackingRef = useRef(sessionTracking)
+  const joinRoomRef = useRef(joinRoom)
+  const startMediaRef = useRef(startMedia)
 
   // Update refs when values change
   useEffect(() => {
@@ -110,7 +112,9 @@ export default function VideoConference() {
     roomIdRef.current = roomId
     leaveRoomRef.current = leaveRoom
     sessionTrackingRef.current = sessionTracking
-  }, [isInRoom, isInCall, roomId, leaveRoom, sessionTracking])
+    joinRoomRef.current = joinRoom
+    startMediaRef.current = startMedia
+  }, [isInRoom, isInCall, roomId, leaveRoom, sessionTracking, joinRoom, startMedia])
 
   // Cleanup when navigating away or closing the page
   // Only run this effect once on mount, use refs for latest values
@@ -180,159 +184,169 @@ export default function VideoConference() {
     };
   }, [sessionId]) // Only sessionId in dependencies - effect runs once on mount
 
-  // Join session after SFU is connected
+  // Join session after SFU is connected - use refs to prevent duplicate calls
   useEffect(() => {
     // Wait for auth to finish loading
     if (authLoading) {
       return;
     }
     
+    // Early return if conditions aren't met
+    if (!sessionId || !isConnected || isInRoom || isJoiningRef.current || isLeavingRef.current || hasAttemptedJoinRef.current || !userData?.id || !authTokens?.access) {
+      return;
+    }
+    
+    // Mark as attempting immediately to prevent duplicate calls
+    isJoiningRef.current = true
+    hasAttemptedJoinRef.current = true
+    
     const joinSession = async () => {
-      // Don't rejoin if we're leaving or already joining or already attempted
-      // Also check that we have userData (required for join API call)
-      if (sessionId && isConnected && !isInRoom && !isJoiningRef.current && !isLeavingRef.current && !hasAttemptedJoinRef.current && userData?.id && authTokens?.access) {
-        isJoiningRef.current = true
-        hasAttemptedJoinRef.current = true // Mark that we've attempted to join
-        try {
-          if (process.env.NODE_ENV === 'development') {
-            console.log('Attempting to join session:', { sessionId, userId: userData?.id });
-          }
-          
-          // Check if user is authenticated
-          if (!userData?.id || !authTokens?.access) {
-            throw new Error('User not authenticated. Please log in again.')
-          }
-          
-          // Use tokens from context (already parsed)
-          const tokens = authTokens
-          
-          // Detect if user is super admin and determine endpoint
-          const isSuperAdmin = userData?.role === 'super_admin'
-          const endpoint = isSuperAdmin 
-            ? config.API_BASE_URL + `course/session/${sessionId}/monitor/`
-            : config.API_BASE_URL + `course/session/${sessionId}/join/`
-          
-          const response = await fetch(endpoint, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${tokens.access}`
-            },
-            body: JSON.stringify({
-              display_name: userData?.full_name || 'Student'
-            })
-          })
-          
-          if (!response.ok) {
-            const errorData = await response.json()
-            throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`)
-          }
-          
-          const sessionData = await response.json()
-          if (process.env.NODE_ENV === 'development') {
-            console.log('Session join response:', sessionData);
-          }
-          
-          // Extract room ID and user role from the session data
-          // Convert to string since SFU server expects string IDs
-          const actualRoomId = String(sessionData.session.id)
-          const displayName = sessionData.user?.display_name || userData?.full_name || 'Student'
-          const role = sessionData.user?.role || 'member' // Get role from backend response
-          const isHidden = sessionData.user?.is_hidden === true
-          
-          setUserRole(role) // Store role for later use
-          setIsObserverMode(isHidden) // Set observer mode if user is hidden
-          
-          // Set the room ID for the session
-          setRoomId(actualRoomId)
-          
-          // Start session tracking
-          sessionTracking.startSession()
-          
-          // Join the SFU room with the actual room ID, role, and observer flag
-          const joinResult = await joinRoom(actualRoomId, displayName, { 
-            role,
-            isHidden // Pass hidden flag to SFU
-          });
-          
-          // Wait a bit longer to ensure room join is fully processed
-          await new Promise(resolve => setTimeout(resolve, 800));
-          
-          // Only start media if NOT in observer mode
-          if (!isHidden) {
-            try {
-              await startMedia();
-            } catch (mediaError) {
-              if (process.env.NODE_ENV === 'development') {
-                console.error('Failed to start media:', mediaError);
-              }
-              
-              // Handle non-secure context gracefully
-              if (mediaError.message === 'MEDIA_NOT_AVAILABLE_NON_SECURE') {
-                // Don't set error - user can still participate without camera/mic
-                // This is expected behavior for IP addresses (not localhost)
-              } else if (mediaError.message?.includes('getUserMedia') || mediaError.message?.includes('not available')) {
-                // Check if it's a non-secure context issue
-                const isNonSecure = window.location.hostname !== 'localhost' && 
-                                  window.location.hostname !== '127.0.0.1' && 
-                                  window.location.protocol !== 'https:';
-                
-                if (!isNonSecure) {
-                  setError('Camera and microphone access is required for video conferencing. ' +
-                    'Please allow camera/microphone permissions and ensure you are using a secure connection (HTTPS or localhost).');
-                }
-                // For non-secure connections, silently continue without media
-              } else {
-                setError(mediaError.message || 'Failed to start camera/microphone. You can still join the session.');
-              }
-              // Continue anyway - user can join without media
-            }
-          }
-          
-          setIsInCall(true)
-        } catch (error) {
-          console.error("Failed to join session:", {
-            message: error.message,
-            originalError: error.originalError,
-            response: error.response,
-            status: error.status || error.response?.status,
-            stack: error.stack
-          })
-          
-          // Provide more specific error messages
-          let errorMessage = "Failed to join session. Please try again."
-          
-          if (error.message?.includes('not currently live') || error.message?.includes('not live')) {
-            errorMessage = "This session is not currently live. Please wait for the instructor to start the session."
-          } else if (error.message?.includes('403') || error.message?.includes('permission')) {
-            errorMessage = "You don't have permission to join this session."
-          } else if (error.message?.includes('404') || error.message?.includes('not found')) {
-            errorMessage = "Session not found or no longer available."
-          } else if (error.message?.includes('401') || error.message?.includes('authentication')) {
-            errorMessage = "Authentication failed. Please log in again."
-          } else if (error.message?.includes('full')) {
-            errorMessage = "Session is full. Please try again later."
-          } else if (error.message?.includes('WebSocket') || error.message?.includes('SFU')) {
-            errorMessage = `Connection error: ${error.message}. Please ensure the SFU server is running.`
-          } else if (error.message) {
-            errorMessage = error.message
-          }
-          
-          setError(errorMessage)
-          // Reset the attempt flag on error so user can retry
-          hasAttemptedJoinRef.current = false
-        } finally {
-          isJoiningRef.current = false
+      try {
+        if (process.env.NODE_ENV === 'development') {
+          console.log('Attempting to join session:', { sessionId, userId: userData?.id });
         }
+        
+        // Check if user is authenticated
+        if (!userData?.id || !authTokens?.access) {
+          throw new Error('User not authenticated. Please log in again.')
+        }
+        
+        // Use tokens from context (already parsed)
+        const tokens = authTokens
+        
+        // Detect if user is super admin and determine endpoint
+        const isSuperAdmin = userData?.role === 'super_admin'
+        const endpoint = isSuperAdmin 
+          ? config.API_BASE_URL + `course/session/${sessionId}/monitor/`
+          : config.API_BASE_URL + `course/session/${sessionId}/join/`
+        
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${tokens.access}`
+          },
+          body: JSON.stringify({
+            display_name: userData?.full_name || 'Student'
+          })
+        })
+        
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}))
+          throw new Error(errorData.error || errorData.detail || `HTTP ${response.status}: ${response.statusText}`)
+        }
+        
+        const sessionData = await response.json()
+        if (process.env.NODE_ENV === 'development') {
+          console.log('Session join response:', sessionData);
+        }
+        
+        // Extract room ID and user role from the session data
+        // Convert to string since SFU server expects string IDs
+        const actualRoomId = String(sessionData.session.id)
+        const displayName = sessionData.user?.display_name || userData?.full_name || 'Student'
+        const role = sessionData.user?.role || 'member' // Get role from backend response
+        const isHidden = sessionData.user?.is_hidden === true
+        
+        setUserRole(role) // Store role for later use
+        setIsObserverMode(isHidden) // Set observer mode if user is hidden
+        
+        // Set the room ID for the session
+        setRoomId(actualRoomId)
+        
+        // Start session tracking
+        sessionTrackingRef.current.startSession()
+        
+        // Join the SFU room with the actual room ID, role, and observer flag
+        const joinResult = await joinRoomRef.current(actualRoomId, displayName, { 
+          role,
+          isHidden // Pass hidden flag to SFU
+        });
+        
+        // Wait a bit longer to ensure room join is fully processed
+        await new Promise(resolve => setTimeout(resolve, 800));
+        
+        // Only start media if NOT in observer mode
+        if (!isHidden) {
+          try {
+            await startMediaRef.current();
+          } catch (mediaError) {
+            if (process.env.NODE_ENV === 'development') {
+              console.error('Failed to start media:', mediaError);
+            }
+            
+            // Handle non-secure context gracefully
+            if (mediaError.message === 'MEDIA_NOT_AVAILABLE_NON_SECURE') {
+              // Don't set error - user can still participate without camera/mic
+              // This is expected behavior for IP addresses (not localhost)
+            } else if (mediaError.message?.includes('getUserMedia') || mediaError.message?.includes('not available')) {
+              // Check if it's a non-secure context issue
+              const isNonSecure = window.location.hostname !== 'localhost' && 
+                                window.location.hostname !== '127.0.0.1' && 
+                                window.location.protocol !== 'https:';
+              
+              if (!isNonSecure) {
+                setError('Camera and microphone access is required for video conferencing. ' +
+                  'Please allow camera/microphone permissions and ensure you are using a secure connection (HTTPS or localhost).');
+              }
+              // For non-secure connections, silently continue without media
+            } else {
+              setError(mediaError.message || 'Failed to start camera/microphone. You can still join the session.');
+            }
+            // Continue anyway - user can join without media
+          }
+        }
+        
+        setIsInCall(true)
+      } catch (error) {
+        console.error("Failed to join session:", {
+          message: error.message,
+          originalError: error.originalError,
+          response: error.response,
+          status: error.status || error.response?.status,
+          stack: error.stack
+        })
+        
+        // Provide more specific error messages
+        let errorMessage = "Failed to join session. Please try again."
+        
+        if (error.message?.includes('not currently live') || error.message?.includes('not live')) {
+          errorMessage = "This session is not currently live. Please wait for the instructor to start the session."
+        } else if (error.message?.includes('403') || error.message?.includes('permission')) {
+          errorMessage = "You don't have permission to join this session."
+        } else if (error.message?.includes('404') || error.message?.includes('not found')) {
+          errorMessage = "Session not found or no longer available."
+        } else if (error.message?.includes('401') || error.message?.includes('authentication')) {
+          errorMessage = "Authentication failed. Please log in again."
+        } else if (error.message?.includes('full')) {
+          errorMessage = "Session is full. Please try again later."
+        } else if (error.message?.includes('throttled') || error.message?.includes('429')) {
+          errorMessage = "Too many requests. Please wait a moment and try again."
+        } else if (error.message?.includes('WebSocket') || error.message?.includes('SFU')) {
+          errorMessage = `Connection error: ${error.message}. Please ensure the SFU server is running.`
+        } else if (error.message) {
+          errorMessage = error.message
+        }
+        
+        setError(errorMessage)
+        // Reset the attempt flag on error so user can retry after a delay
+        setTimeout(() => {
+          hasAttemptedJoinRef.current = false
+        }, 2000) // Wait 2 seconds before allowing retry
+      } finally {
+        isJoiningRef.current = false
       }
     }
     
     joinSession()
-  }, [sessionId, isConnected, isInRoom, userData?.id, authTokens?.access, authLoading, joinRoom, startMedia, sessionTracking])
+    // Only depend on essential values that should trigger a new join attempt
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionId, isConnected, isInRoom, userData?.id, authTokens?.access, authLoading])
   
   // Reset join attempt flag when sessionId changes (user navigates to different session)
   useEffect(() => {
     hasAttemptedJoinRef.current = false
+    isJoiningRef.current = false
   }, [sessionId])
 
   const handleLeaveCall = async () => {
