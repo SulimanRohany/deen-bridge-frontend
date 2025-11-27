@@ -12,8 +12,9 @@ export default function ImageUpload({ value, onChange }) {
     const file = e.target.files[0]
     if (!file) return
 
-    if (file.size > 5 * 1024 * 1024) {
-      alert('File size must be less than 5MB')
+    // Increased limit to 10MB to match backend settings
+    if (file.size > 10 * 1024 * 1024) {
+      alert('File size must be less than 10MB')
       return
     }
 
@@ -77,7 +78,7 @@ export default function ImageUpload({ value, onChange }) {
               <span className="font-semibold">Click to upload</span> or drag and drop
             </p>
             <p className="text-xs text-gray-500">
-              PNG, JPG, WEBP up to 5MB
+              PNG, JPG, WEBP up to 10MB
             </p>
           </div>
         </label>

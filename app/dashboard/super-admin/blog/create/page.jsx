@@ -116,20 +116,50 @@ export default function CreateBlogPostPage() {
 
       const token = getAccessToken();
 
+      // Check payload size before sending (warn if too large)
+      const bodySize = new Blob([values.body]).size
+      const bodySizeMB = bodySize / (1024 * 1024)
+      
+      if (bodySizeMB > 8) {
+        toast.warning(`Blog content is ${bodySizeMB.toFixed(2)}MB. Large content may cause upload issues. Consider reducing embedded images.`)
+      }
+
       const response = await axios.post(config.API_BASE_URL + 'blog/post/', formData, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'multipart/form-data'
-        }
+        },
+        maxContentLength: 100 * 1024 * 1024, // 100MB
+        maxBodyLength: 100 * 1024 * 1024, // 100MB
       })
 
       if (response.status === 200 || response.status === 201) {
+        toast.success('Blog post created successfully!')
         router.push('/dashboard/super-admin/blog')
       } else {
         console.error('Failed to create post')
+        toast.error('Failed to create post. Please try again.')
       }
     } catch (error) {
       console.error('Error creating post:', error)
+      
+      // Provide helpful error messages
+      if (error.response?.status === 413 || error.code === 'ERR_NETWORK') {
+        if (error.response?.status === 413) {
+          toast.error('Request too large. Please reduce the size of your content or images and try again.')
+        } else {
+          toast.error('Network error. The request may be too large. Please try reducing content size.')
+        }
+      } else if (error.response?.status === 400) {
+        toast.error('Invalid data. Please check your form inputs.')
+      } else if (error.response?.status === 401) {
+        toast.error('Authentication required. Please login again.')
+        router.push('/login')
+      } else if (error.response?.status >= 500) {
+        toast.error('Server error. Please try again later.')
+      } else {
+        toast.error(error.response?.data?.message || 'An error occurred while creating the post.')
+      }
     } finally {
       setLoading(false)
     }
