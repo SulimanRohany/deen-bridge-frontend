@@ -1166,7 +1166,7 @@ export default function Home() {
       console.log('⚠️ No userData, skipping data load')
       setIsLoading(false)
     }
-  }, [userData, loadStudentData, enrollments.length])
+  }, [userData, loadStudentData, enrollments.length, isLoading])
 
   const handleRefresh = () => {
     if (!isLoading) {
