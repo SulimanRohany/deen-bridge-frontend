@@ -69,13 +69,15 @@ export default function DashboardPage(){
                 router.push('/dashboard/teacher');
                 break;
             case 'student':
-                router.push('/dashboard/student');
+                // Students should go to the homepage which is their dashboard
+                router.push('/');
                 break;
             case 'parent':
                 router.push('/dashboard/parent');
                 break;
             default:
-                router.push('/dashboard/student');
+                // Default to homepage for students
+                router.push('/');
         }
     }, [userData?.role, router]);
 

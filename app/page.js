@@ -1143,23 +1143,30 @@ export default function Home() {
   }, [userData])
 
   useEffect(() => {
-    console.log('🔍 useEffect triggered', { hasUserData: !!userData, isLoading })
-    if (userData && !isLoading) {
-      console.log('✅ userData exists, calling loadStudentData()...')
-      loadStudentData()
-      
-      // Safety timeout: force loading to false after 10 seconds
-      const timeout = setTimeout(() => {
-        console.warn('⚠️ Loading timeout reached! Forcing isLoading to false')
+    console.log('🔍 useEffect triggered', { hasUserData: !!userData, isLoading, enrollmentsCount: enrollments.length })
+    if (userData?.id) {
+      // Only load if we haven't loaded enrollments yet (empty array means not loaded)
+      // Don't check isLoading because it starts as true and we want to load on first render
+      if (enrollments.length === 0) {
+        console.log('✅ userData exists and enrollments empty, calling loadStudentData()...')
+        loadStudentData()
+        
+        // Safety timeout: force loading to false after 10 seconds
+        const timeout = setTimeout(() => {
+          console.warn('⚠️ Loading timeout reached! Forcing isLoading to false')
+          setIsLoading(false)
+        }, 10000)
+        
+        return () => clearTimeout(timeout)
+      } else if (enrollments.length > 0 && isLoading) {
+        // Data already loaded, ensure loading is false
         setIsLoading(false)
-      }, 10000)
-      
-      return () => clearTimeout(timeout)
+      }
     } else if (!userData) {
       console.log('⚠️ No userData, skipping data load')
       setIsLoading(false)
     }
-  }, [userData, loadStudentData])
+  }, [userData, loadStudentData, enrollments.length])
 
   const handleRefresh = () => {
     if (!isLoading) {

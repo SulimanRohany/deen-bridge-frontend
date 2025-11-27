@@ -17,6 +17,7 @@ import { Badge } from '@/components/ui/badge'
 import CommentSection from '@/components/blog/CommentSection'
 import SocialShare from '@/components/blog/SocialShare'
 import BlogPostCard from '@/components/blog/BlogPostCard'
+import { StructuredData } from '@/components/seo/structured-data'
 
 export default function BlogPostPage({ params }) {
   // Unwrap the params Promise using React.use()
@@ -95,6 +96,19 @@ export default function BlogPostPage({ params }) {
 
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900">
+      {/* Structured Data for SEO */}
+      {post && <StructuredData type="blogPost" data={post} />}
+      {post && (
+        <StructuredData
+          type="breadcrumb"
+          data={[
+            { name: 'Home', url: '/' },
+            { name: 'Blog', url: '/blogs' },
+            { name: post.title, url: `/blogs/${post.slug}` },
+          ]}
+        />
+      )}
+      
       {/* Simple Header */}
       <div className="border-b border-gray-200 dark:border-gray-800">
         <div className="container mx-auto px-4 py-4 max-w-4xl">

@@ -7,6 +7,7 @@ import {
   IconBrandInstagram, 
   IconBrandTwitter, 
   IconBrandYoutube,
+  IconBrandTiktok,
   IconMail,
   IconPhone,
   IconMapPin,
@@ -44,23 +45,28 @@ export default function Footer() {
             </p>
             <div className="flex space-x-2">
               <Button variant="ghost" size="icon" className="hover:text-primary hover:bg-primary/10 transition-all rounded-lg" asChild>
-                <a href="#" aria-label="Facebook" target="_blank" rel="noopener noreferrer">
+                <a href="https://www.facebook.com/share/1Cwe8d5N7L/" aria-label="Facebook" target="_blank" rel="noopener noreferrer">
                   <IconBrandFacebook size={20} />
                 </a>
               </Button>
               <Button variant="ghost" size="icon" className="hover:text-primary hover:bg-primary/10 transition-all rounded-lg" asChild>
-                <a href="#" aria-label="Instagram" target="_blank" rel="noopener noreferrer">
+                <a href="https://www.instagram.com/deenbridge4/" aria-label="Instagram" target="_blank" rel="noopener noreferrer">
                   <IconBrandInstagram size={20} />
                 </a>
               </Button>
               <Button variant="ghost" size="icon" className="hover:text-primary hover:bg-primary/10 transition-all rounded-lg" asChild>
-                <a href="#" aria-label="Twitter" target="_blank" rel="noopener noreferrer">
+                <a href="https://x.com/DeenBridge4" aria-label="Twitter" target="_blank" rel="noopener noreferrer">
                   <IconBrandTwitter size={20} />
                 </a>
               </Button>
               <Button variant="ghost" size="icon" className="hover:text-primary hover:bg-primary/10 transition-all rounded-lg" asChild>
-                <a href="#" aria-label="YouTube" target="_blank" rel="noopener noreferrer">
+                <a href="https://www.youtube.com/@DeenBridge4" aria-label="YouTube" target="_blank" rel="noopener noreferrer">
                   <IconBrandYoutube size={20} />
+                </a>
+              </Button>
+              <Button variant="ghost" size="icon" className="hover:text-primary hover:bg-primary/10 transition-all rounded-lg" asChild>
+                <a href="https://www.tiktok.com/@deenbridge" aria-label="TikTok" target="_blank" rel="noopener noreferrer">
+                  <IconBrandTiktok size={20} />
                 </a>
               </Button>
             </div>
@@ -161,12 +167,12 @@ export default function Footer() {
             <div className="space-y-4">
               <div className="flex items-start group">
                 <IconMapPin className="h-5 w-5 text-primary mr-3 mt-0.5 flex-shrink-0 group-hover:scale-110 transition-transform" />
-                <span className="text-muted-foreground text-sm leading-relaxed">123 Islamic Street, Dhaka, Bangladesh</span>
+                <span className="text-muted-foreground text-sm leading-relaxed">Kabul, Afghanistan</span>
               </div>
               <div className="flex items-center group">
                 <IconPhone className="h-5 w-5 text-primary mr-3 flex-shrink-0 group-hover:scale-110 transition-transform" />
-                <a href="tel:+8801234567890" className="text-muted-foreground hover:text-primary transition-colors text-sm">
-                  +880 1234 567890
+                <a href="tel:0789468067" className="text-muted-foreground hover:text-primary transition-colors text-sm">
+                  0789468067
                 </a>
               </div>
               <div className="flex items-center group">

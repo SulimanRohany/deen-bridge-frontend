@@ -65,6 +65,7 @@ import {
 } from "@/components/ui/accordion"
 
 import { WHATSAPP_NUMBER } from '@/lib/constants'
+import { StructuredData } from '@/components/seo/structured-data'
 
 /* ---------------- helpers ---------------- */
 function toArray(v) {
@@ -545,6 +546,19 @@ export default function CourseDetailsPage() {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Structured Data for SEO */}
+      {course && <StructuredData type="course" data={course} />}
+      {course && (
+        <StructuredData
+          type="breadcrumb"
+          data={[
+            { name: 'Home', url: '/' },
+            { name: 'Courses', url: '/courses' },
+            { name: course.title || course.name, url: `/courses/${course.id}` },
+          ]}
+        />
+      )}
+      
       {/* 🚨 LIVE SESSION ALERT - Top Priority */}
       {hasLiveSession && (
         <div className="sticky top-0 z-50 bg-gradient-to-r from-red-600 via-red-500 to-red-600 text-white px-4 py-3 shadow-lg">
