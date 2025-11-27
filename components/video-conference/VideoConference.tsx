@@ -134,7 +134,7 @@ export function VideoConference({ roomId, onRoomCreated, onRoomJoined }: VideoCo
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Card className="w-full max-w-md">
-          <CardHeader>
+          <CardHeader className="">
             <CardTitle>Connecting to SFU...</CardTitle>
           </CardHeader>
           <CardContent>

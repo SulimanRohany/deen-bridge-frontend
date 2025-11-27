@@ -1166,7 +1166,8 @@ export default function Home() {
       console.log('⚠️ No userData, skipping data load')
       setIsLoading(false)
     }
-  }, [userData, loadStudentData, enrollments.length, isLoading])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userData, loadStudentData, enrollments.length])
 
   const handleRefresh = () => {
     if (!isLoading) {
