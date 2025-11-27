@@ -53,10 +53,11 @@ export function useSFU(options = {}) {
       console.log('Creating SFU client...');
     }
 
-    const config = {
+    const sfuConfig = {
       sfuUrl,
       token: authTokens?.access || '',
       userId: userData?.id || '',
+      iceServers: config.ICE_SERVERS,
       onConnected: () => {
         if (process.env.NODE_ENV === 'development') {
           console.log('SFU Connected');
@@ -390,7 +391,7 @@ export function useSFU(options = {}) {
       },
     };
 
-    sfuClientRef.current = new SFUClient(config);
+    sfuClientRef.current = new SFUClient(sfuConfig);
 
     if (options.autoConnect) {
       connect();

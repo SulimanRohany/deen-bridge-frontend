@@ -1144,7 +1144,7 @@ export default function Home() {
 
   useEffect(() => {
     console.log('🔍 useEffect triggered', { hasUserData: !!userData, isLoading })
-    if (userData) {
+    if (userData && !isLoading) {
       console.log('✅ userData exists, calling loadStudentData()...')
       loadStudentData()
       
@@ -1155,11 +1155,11 @@ export default function Home() {
       }, 10000)
       
       return () => clearTimeout(timeout)
-    } else {
+    } else if (!userData) {
       console.log('⚠️ No userData, skipping data load')
       setIsLoading(false)
     }
-  }, [userData, loadStudentData, isLoading])
+  }, [userData, loadStudentData])
 
   const handleRefresh = () => {
     if (!isLoading) {

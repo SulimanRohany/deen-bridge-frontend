@@ -1,7 +1,7 @@
 
 "use client"
 
-import React, { useEffect, useRef, useState } from "react"
+import React, { useEffect, useRef, useState, useMemo } from "react"
 import { Card } from "@/components/ui/card"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Mic, MicOff, Video, VideoOff, Users, Pin, Monitor } from "lucide-react"
@@ -24,24 +24,27 @@ export function VideoGrid({ localStream, participants, remoteStreams, remotePart
   const [activeSpeakerId, setActiveSpeakerId] = useState(null)
   const MAX_VISIBLE_PARTICIPANTS = 9
   
-  console.log('🔄 VideoGrid re-render triggered, streamUpdateCounter:', streamUpdateCounter)
+  // Memoize local participant ID to prevent unnecessary recalculations
+  const localParticipantId = useMemo(() => `local_${currentUserId}`, [currentUserId]);
 
-  // Create local participant object (only if not in observer mode)
-  const localParticipantId = `local_${currentUserId}`;
-  const localParticipant = !isObserverMode ? {
-    id: localParticipantId,
-    userId: currentUserId,
-    stream: localStream,
-    isLocal: true,
-    name: "You",
-    role: userRole, // Add role for local participant
-    isVideoEnabled: isVideoEnabled,
-    isAudioEnabled: isAudioEnabled,
-    isScreenSharing: screenSharingParticipants?.has(localParticipantId) || false,
-  } : null
+  // Memoize local participant object to prevent unnecessary re-renders
+  const localParticipant = useMemo(() => {
+    if (isObserverMode) return null;
+    return {
+      id: localParticipantId,
+      userId: currentUserId,
+      stream: localStream,
+      isLocal: true,
+      name: "You",
+      role: userRole,
+      isVideoEnabled: isVideoEnabled,
+      isAudioEnabled: isAudioEnabled,
+      isScreenSharing: screenSharingParticipants?.has(localParticipantId) || false,
+    };
+  }, [isObserverMode, localParticipantId, currentUserId, localStream, userRole, isVideoEnabled, isAudioEnabled, screenSharingParticipants]);
 
-  // Filter remote participants to exclude current user, hidden participants, and map them properly
-  const filteredRemoteParticipants = participants
+  // Memoize filtered remote participants to prevent unnecessary recalculations
+  const filteredRemoteParticipants = useMemo(() => participants
     .filter((p) => {
       // Safety check: ensure currentUserId is defined
       if (!currentUserId) {
@@ -71,48 +74,12 @@ export function VideoGrid({ localStream, participants, remoteStreams, remotePart
         remoteParticipant = remoteParticipants.get(stringKey);
       }
       
-      console.log(`🔍 Mapping participant ${p.displayName || p.name}:`, {
-        participantId: p.id,
-        participantIdType: typeof p.id,
-        hasStreamInMap: remoteStreams.has(p.id),
-        hasStreamInMapAsString: remoteStreams.has(String(p.id)),
-        remoteStream: remoteStream,
-        hasVideo: !!remoteStream?.video,
-        hasAudio: !!remoteStream?.audio,
-        hasScreenShare: !!remoteStream?.screenShare,
-        allStreamKeys: Array.from(remoteStreams.keys()),
-        streamKeysTypes: Array.from(remoteStreams.keys()).map(k => typeof k)
-      });
-      
       // Check if tracks are actually enabled AND not muted (producer paused)
       const videoTrack = remoteStream?.video?.getTracks().find(t => t.kind === 'video');
       const audioTrack = remoteStream?.audio?.getTracks().find(t => t.kind === 'audio');
       
-      console.log(`🎯 Track state for ${p.displayName || p.name}:`, {
-        hasVideoStream: !!remoteStream?.video,
-        hasAudioStream: !!remoteStream?.audio,
-        videoTrack: videoTrack ? {
-          id: videoTrack.id,
-          enabled: videoTrack.enabled,
-          muted: videoTrack.muted,
-          readyState: videoTrack.readyState
-        } : null,
-        audioTrack: audioTrack ? {
-          id: audioTrack.id,
-          enabled: audioTrack.enabled,
-          muted: audioTrack.muted,
-          readyState: audioTrack.readyState
-        } : null
-      });
-      
       // Get producer state from remoteParticipants map if available
       const remoteParticipantState = remoteParticipant || {};
-      
-      console.log(`📊 Remote participant state for ${p.displayName || p.name}:`, {
-        hasRemoteParticipantState: !!remoteParticipant,
-        isVideoEnabledFromState: remoteParticipantState.isVideoEnabled,
-        isAudioEnabledFromState: remoteParticipantState.isAudioEnabled
-      });
       
       return {
         ...p,
@@ -137,76 +104,45 @@ export function VideoGrid({ localStream, participants, remoteStreams, remotePart
         // Add a flag to indicate if we're still waiting for the stream
         hasStream: !!remoteStream,
       }
-    })
+    }), [participants, currentUserId, remoteStreams, remoteParticipants, screenSharingParticipants]);
 
-  // Combine local and remote participants (filter out null local participant in observer mode)
-  const allParticipants = [localParticipant, ...filteredRemoteParticipants].filter(p => p !== null)
+  // Memoize all participants to prevent unnecessary recalculations
+  const allParticipants = useMemo(() => {
+    return [localParticipant, ...filteredRemoteParticipants].filter(p => p !== null);
+  }, [localParticipant, filteredRemoteParticipants]);
   
-  // Split participants into visible and hidden
-  // If more than MAX_VISIBLE_PARTICIPANTS, show MAX_VISIBLE_PARTICIPANTS-1 participants + "more" button
-  const shouldShowMoreButton = allParticipants.length > MAX_VISIBLE_PARTICIPANTS
-  const visibleParticipants = shouldShowMoreButton 
-    ? allParticipants.slice(0, MAX_VISIBLE_PARTICIPANTS - 1)
-    : allParticipants
-  const hiddenParticipants = shouldShowMoreButton 
-    ? allParticipants.slice(MAX_VISIBLE_PARTICIPANTS - 1)
-    : []
-  const hasHiddenParticipants = hiddenParticipants.length > 0
+  // Memoize visible and hidden participants
+  const { visibleParticipants, hiddenParticipants, hasHiddenParticipants, shouldShowMoreButton } = useMemo(() => {
+    const shouldShowMore = allParticipants.length > MAX_VISIBLE_PARTICIPANTS;
+    const visible = shouldShowMore 
+      ? allParticipants.slice(0, MAX_VISIBLE_PARTICIPANTS - 1)
+      : allParticipants;
+    const hidden = shouldShowMore 
+      ? allParticipants.slice(MAX_VISIBLE_PARTICIPANTS - 1)
+      : [];
+    return {
+      visibleParticipants: visible,
+      hiddenParticipants: hidden,
+      hasHiddenParticipants: hidden.length > 0,
+      shouldShowMoreButton: shouldShowMore
+    };
+  }, [allParticipants]);
 
-  console.log('👥 All participants to render:', {
-    totalCount: allParticipants.length,
-    visibleCount: visibleParticipants.length,
-    hiddenCount: hiddenParticipants.length,
-    participants: allParticipants.map(p => ({
-      id: p.id,
-      name: p.name,
-      isLocal: p.isLocal,
-      hasStream: !!p.stream
-    }))
-  });
-
-  // Debug logging
+  // Debug logging - only log when actual values change, not on every render
   useEffect(() => {
-    console.log('📺 VideoGrid rendering:', {
-      currentUserId,
-      localParticipantId: localParticipant?.id,
-      localParticipantUserId: localParticipant?.userId,
-      isObserverMode,
-      localStream: !!localStream,
-      totalParticipants: participants.length,
-      participantsFromProps: participants.map(p => ({ 
-        id: p.id, 
-        userId: p.userId, 
-        name: p.displayName || p.name 
-      })),
-      remoteStreamsMapSize: remoteStreams.size,
-      remoteStreamsEntries: Array.from(remoteStreams.entries()).map(([id, streams]) => ({
-        participantId: id,
-        hasAudio: !!streams?.audio,
-        hasVideo: !!streams?.video,
-        audioTracks: streams?.audio?.getTracks().length || 0,
-        videoTracks: streams?.video?.getTracks().length || 0
-      })),
-      filteredRemoteCount: filteredRemoteParticipants.length,
-      filteredRemote: filteredRemoteParticipants.map(p => ({ 
-        id: p.id, 
-        userId: p.userId, 
-        name: p.name,
-        hasStream: !!p.stream,
-        stream: p.stream,
-        audioStream: p.audioStream
-      })),
-      totalRendered: allParticipants.length,
-      allRendered: allParticipants.map(p => ({ 
-        id: p.id, 
-        userId: p.userId, 
-        name: p.name,
-        isLocal: p.isLocal,
-        hasStream: !!p.stream,
-        isVideoEnabled: p.isVideoEnabled
-      }))
-    });
-  }, [participants, currentUserId, filteredRemoteParticipants.length, remoteStreams]);
+    if (process.env.NODE_ENV === 'development') {
+      console.log('📺 VideoGrid rendering:', {
+        currentUserId,
+        localParticipantId: localParticipant?.id,
+        isObserverMode,
+        totalParticipants: participants.length,
+        remoteStreamsMapSize: remoteStreams.size,
+        filteredRemoteCount: filteredRemoteParticipants.length,
+        totalRendered: allParticipants.length,
+        streamUpdateCounter
+      });
+    }
+  }, [participants.length, currentUserId, remoteStreams.size, filteredRemoteParticipants.length, allParticipants.length, streamUpdateCounter, localParticipant?.id, isObserverMode]);
 
   const getGridClass = (count) => {
     const displayCount = Math.min(count, MAX_VISIBLE_PARTICIPANTS)
@@ -235,9 +171,11 @@ export function VideoGrid({ localStream, participants, remoteStreams, remotePart
     return "grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2"
   }
 
-  const displayCount = hasHiddenParticipants 
-    ? visibleParticipants.length + 1  // +1 for the "more" button
-    : allParticipants.length
+  const displayCount = useMemo(() => {
+    return hasHiddenParticipants 
+      ? visibleParticipants.length + 1  // +1 for the "more" button
+      : allParticipants.length;
+  }, [hasHiddenParticipants, visibleParticipants.length, allParticipants.length]);
 
   // Handle pin/spotlight mode
   const pinnedParticipant = pinnedParticipantId 
@@ -552,42 +490,20 @@ const VideoTile = function VideoTile({
   // ALSO check if screen sharing - show video stream even if camera is off
   const shouldShowVideo = (participant.isVideoEnabled || participant.isScreenSharing) && participant.stream
   
-  // Debug logging for track state
-  if (!isLocal && participant.stream) {
-    const videoTrack = participant.stream.getTracks().find(t => t.kind === 'video')
-    if (videoTrack) {
-      console.log(`🔍 Track check for ${participant.name}:`, {
-        trackEnabled: videoTrack.enabled,
-        trackMuted: videoTrack.muted,
-        participantIsVideoEnabled: participant.isVideoEnabled,
-        willShowVideo: shouldShowVideo
-      })
+  // Debug logging for track state - only in development and only log changes
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'development' && !isLocal && participant.stream) {
+      const videoTrack = participant.stream.getTracks().find(t => t.kind === 'video')
+      if (videoTrack) {
+        console.log(`🔍 Track check for ${participant.name}:`, {
+          trackEnabled: videoTrack.enabled,
+          trackMuted: videoTrack.muted,
+          participantIsVideoEnabled: participant.isVideoEnabled,
+          willShowVideo: shouldShowVideo
+        })
+      }
     }
-  }
-
-  console.log(`📺 VideoTile RENDER for ${participant.name}:`, {
-    participantId: participant.id,
-    isLocal,
-    hasVideo,
-    shouldShowVideo,
-    isVideoEnabled: participant.isVideoEnabled,
-    WILL_SHOW_AVATAR: !shouldShowVideo,
-    isAudioEnabled: participant.isAudioEnabled,
-    hasStream: !!participant.stream,
-    streamDetails: participant.stream ? {
-      id: participant.stream.id,
-      active: participant.stream.active,
-      tracks: participant.stream.getTracks().map(t => ({
-        kind: t.kind,
-        enabled: t.enabled,
-        readyState: t.readyState,
-        muted: t.muted  // ← Important for debugging
-      }))
-    } : null,
-    willRenderVideoElement: hasVideo,
-    willShowVideo: shouldShowVideo,
-    willShowAvatar: !shouldShowVideo
-  });
+  }, [participant.stream, participant.isVideoEnabled, shouldShowVideo, isLocal, participant.name]);
 
   return (
     <Card 
