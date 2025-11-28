@@ -23,12 +23,12 @@ const nextConfig = {
         port: '8000',
         pathname: '/media/**',
       },
-      // Add production domain when you deploy
-      // {
-      //   protocol: 'https',
-      //   hostname: 'your-production-domain.com',
-      //   pathname: '/media/**',
-      // },
+      // Production domain configuration
+      {
+        protocol: 'https',
+        hostname: 'api.deenbridge.com',
+        pathname: '/media/**',
+      },
     ],
     formats: ['image/avif', 'image/webp'],
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
