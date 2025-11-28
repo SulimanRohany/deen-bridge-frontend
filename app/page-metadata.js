@@ -21,6 +21,6 @@ export const metadata = generateSEOMetadata({
     "Islamic scholarship"
   ],
   type: "website",
-  canonical: "/",
+  canonical: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://www.deenbridge.com'}/`,
 });
 
