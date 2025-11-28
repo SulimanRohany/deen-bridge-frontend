@@ -45,7 +45,6 @@ export default function ReviewCard({ review, currentUser, onEdit, onDelete }) {
         onDelete(review.id)
       }
     } catch (error) {
-      console.error('Error deleting review:', error)
       toast.error('Failed to delete review. Please try again.')
     } finally {
       setIsDeleting(false)

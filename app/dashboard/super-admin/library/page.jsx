@@ -135,7 +135,6 @@ export default function LibraryManagementPage() {
         setTotalPages(1)
       }
     } catch (error) {
-      console.error("Error fetching resources:", error)
       toast.error("Failed to load resources")
       setResources([])
       setTotalCount(0)
@@ -195,7 +194,6 @@ export default function LibraryManagementPage() {
       const response = await subjectAPI.getSubjects()
       setSubjects(response.data || [])
     } catch (error) {
-      console.error("Error fetching subjects:", error)
     }
   }
 
@@ -206,7 +204,6 @@ export default function LibraryManagementPage() {
       fetchResources()
       setDeleteDialogOpen(false)
     } catch (error) {
-      console.error("Error deleting resource:", error)
       toast.error("Failed to delete resource")
     }
   }
@@ -538,7 +535,6 @@ function ResourceDialog({ open, onOpenChange, resource, subjects, onSuccess }) {
       const response = await libraryAPI.getCategories()
       setCategories(response.data || [])
     } catch (error) {
-      console.error("Error fetching categories:", error)
     }
   }
 
@@ -655,7 +651,6 @@ function ResourceDialog({ open, onOpenChange, resource, subjects, onSuccess }) {
 
       onSuccess()
     } catch (error) {
-      console.error("Error saving resource:", error)
       
       // Handle specific error messages
       if (error.response?.data) {
@@ -1055,7 +1050,6 @@ function ViewBookDialog({ open, onOpenChange, resource }) {
         
         toast.success("Download started")
       } catch (error) {
-        console.error("Download failed:", error)
         toast.error("Download failed. Please try again.")
       }
     }

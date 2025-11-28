@@ -211,7 +211,6 @@ export default function CourseSessionsPage() {
         const res = await api.get(`course/${courseId}/`)
         setCourse(res.data)
       } catch (e) {
-        console.error('Failed to load course:', e)
       } finally {
         setCourseLoading(false)
       }
@@ -234,7 +233,6 @@ export default function CourseSessionsPage() {
       setNextUrl(data.next ?? null)
       setPrevUrl(data.previous ?? null)
     } catch (e) {
-      console.error(e)
       setError('Failed to load sessions.')
       setRecords([])
       setCount(0)

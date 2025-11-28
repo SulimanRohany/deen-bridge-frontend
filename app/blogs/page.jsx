@@ -81,7 +81,6 @@ export default function BlogPage() {
           setFeaturedPosts(featured)
         }
       } catch (error) {
-        console.error('Error fetching posts:', error)
         setPosts([])
         setFeaturedPosts([])
       } finally {

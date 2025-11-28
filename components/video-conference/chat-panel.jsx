@@ -42,10 +42,8 @@ export function ChatPanel({ roomId, isOpen, onToggle, onUnreadCountChange, isObs
     autoConnect: true,
     historyLimit: 100,
     onMessage: (message) => {
-      console.log('New message received:', message)
     },
     onError: (error) => {
-      console.error('Chat error:', error)
     },
   })
 
@@ -56,7 +54,6 @@ export function ChatPanel({ roomId, isOpen, onToggle, onUnreadCountChange, isObs
   // Update parent with unread count from backend
   useEffect(() => {
     if (onUnreadCountChange && unreadCount !== undefined) {
-      console.log('📊 ChatPanel: Updating parent with unread count:', unreadCount)
       onUnreadCountChange(unreadCount)
     }
   }, [unreadCount, onUnreadCountChange])
@@ -89,7 +86,6 @@ export function ChatPanel({ roomId, isOpen, onToggle, onUnreadCountChange, isObs
       
       // Only mark as read if it's not from the current user
       if (latestMessage.sender_id !== userData?.id) {
-        console.log('📖 Auto-marking new message as read (chat is open)')
         // Small delay to ensure message is rendered and visible
         setTimeout(() => {
           markMessagesRead()

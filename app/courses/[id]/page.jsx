@@ -264,7 +264,6 @@ export default function CourseDetailsPage() {
           setSessions([])
         }
       } catch (e) {
-        console.error(e)
         setError('Failed to load course.')
       } finally {
         setLoading(false)
@@ -285,7 +284,6 @@ export default function CourseDetailsPage() {
         )
         setLastAttendance(toArray(res.data))
       } catch (e) {
-        console.error(e)
         setLastAttendance([])
       } finally {
         setAttLoading(false)
@@ -312,7 +310,6 @@ export default function CourseDetailsPage() {
           setLastRecordings(toArray(res.data))
         }
       } catch (e) {
-        console.error(e)
         setLastRecordings([])
       } finally {
         setRecLoading(false)
@@ -331,7 +328,6 @@ export default function CourseDetailsPage() {
         const courses = toArray(res.data)
         setRelatedCourses(courses)
       } catch (e) {
-        console.error(e)
         setRelatedCourses([])
       } finally {
         setRelatedCoursesLoading(false)
@@ -393,7 +389,6 @@ export default function CourseDetailsPage() {
           totalMinutes: Math.round(totalMinutes)
         })
       } catch (e) {
-        console.error('Error fetching enrolled student data:', e)
       }
     }
 

@@ -41,7 +41,6 @@ export async function generateMetadata({ params }) {
       modifiedTime: course.updated_at,
     });
   } catch (error) {
-    console.error('Error generating course metadata:', error);
     return generateSEOMetadata({
       title: "Course | Deen Bridge",
       description: "Browse our comprehensive Islamic courses.",

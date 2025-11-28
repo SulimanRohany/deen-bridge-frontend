@@ -70,7 +70,6 @@ export default function ContactPage() {
       
     } catch (error) {
       setIsSubmitting(false)
-      console.error('Error sending message:', error)
       
       toast.error('Failed to send message', {
         description: error.message || 'Please try again or contact us directly.'

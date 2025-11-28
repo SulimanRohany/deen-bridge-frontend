@@ -104,7 +104,6 @@ export default function AdminContactMessages() {
         setTotalPages(1)
       }
     } catch (error) {
-      console.error('Error fetching messages:', error)
       toast.error('Failed to fetch messages', {
         description: error.message
       })
@@ -173,7 +172,6 @@ export default function AdminContactMessages() {
         })
       }
     } catch (error) {
-      console.error('Error fetching stats:', error)
     }
   }
 
@@ -186,7 +184,6 @@ export default function AdminContactMessages() {
       fetchMessages()
       fetchStats()
     } catch (error) {
-      console.error('Error updating status:', error)
       toast.error('Failed to update status', {
         description: error.message
       })

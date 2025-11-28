@@ -141,7 +141,6 @@ export default function TeacherSessionsPage() {
       const parsedTokens = JSON.parse(authTokens);
       return parsedTokens.access;
     } catch (error) {
-      console.error('Error parsing authTokens:', error);
       toast.error('Invalid authentication data. Please login again.');
       router.push('/login');
       return null;
@@ -204,7 +203,6 @@ export default function TeacherSessionsPage() {
         setCourses(coursesRes.data);
       }
     } catch (err) {
-      console.error('Error fetching sessions:', err);
       setError(err.response?.data?.error || err.message || 'Failed to load sessions');
       toast.error('Failed to load sessions');
     } finally {
@@ -214,7 +212,6 @@ export default function TeacherSessionsPage() {
 
   // Handle API errors
   const handleApiError = (error, defaultMessage) => {
-    console.error('API Error:', error);
     if (error.response) {
       if (error.response.status === 401) {
         toast.error('Session expired. Please login again.');
@@ -481,7 +478,6 @@ export default function TeacherSessionsPage() {
       setAttendanceData(data);
       
     } catch (err) {
-      console.error('Error fetching attendance:', err);
       toast.error('Failed to load attendance data');
     } finally {
       setLoadingAttendance(false);
@@ -563,7 +559,6 @@ export default function TeacherSessionsPage() {
       closeAttendanceDialog();
       
     } catch (err) {
-      console.error('Error saving attendance:', err);
       toast.error('Failed to save attendance', {
         description: err.response?.data?.error || err.message || 'Please try again'
       });
@@ -714,7 +709,6 @@ export default function TeacherSessionsPage() {
         setFilesToUpload(prevFiles => prevFiles.filter(f => f.id !== fileData.id));
       } catch (error) {
         errorCount++;
-        console.error('Error uploading file:', error);
         toast.error(`Failed to upload ${fileData.title}`);
       }
     }

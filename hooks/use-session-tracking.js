@@ -54,7 +54,6 @@ export function useSessionTracking(roomId) {
     })
     localStorage.setItem("video-call-sessions", JSON.stringify(sessions))
 
-    console.log("[v0] Session started:", new Date(joinTime).toLocaleTimeString())
   }
 
   const endSession = () => {
@@ -81,7 +80,6 @@ export function useSessionTracking(roomId) {
     })
     localStorage.setItem("video-call-sessions", JSON.stringify(updatedSessions))
 
-    console.log("[v0] Session ended. Duration:", formatDuration(finalDuration))
   }
 
   const trackParticipantJoin = (participantId, participantName) => {
@@ -99,7 +97,6 @@ export function useSessionTracking(roomId) {
       participantHistory: [...prev.participantHistory, participant],
     }))
 
-    console.log("[v0] Participant joined:", participantName, new Date(joinTime).toLocaleTimeString())
   }
 
   const trackParticipantLeave = (participantId) => {
@@ -110,7 +107,6 @@ export function useSessionTracking(roomId) {
       participantHistory: prev.participantHistory.map((p) => {
         if (p.id === participantId && !p.leaveTime) {
           const duration = Math.floor((leaveTime - p.joinTime) / 1000)
-          console.log("[v0] Participant left:", p.name, "Duration:", formatDuration(duration))
           return {
             ...p,
             leaveTime,

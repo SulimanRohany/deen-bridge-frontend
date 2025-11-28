@@ -128,7 +128,6 @@ export default function CourseAttendancePage() {
       setNextUrl(data.next ?? null)
       setPrevUrl(data.previous ?? null)
     } catch (e) {
-      console.error(e)
       setError('Failed to load attendance.')
       setRecords([])
       setCount(0)

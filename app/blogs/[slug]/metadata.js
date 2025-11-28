@@ -41,7 +41,6 @@ export async function generateMetadata({ params }) {
       authors: post.author?.name ? [post.author.name] : ["Deen Bridge Team"],
     });
   } catch (error) {
-    console.error('Error generating blog metadata:', error);
     return generateSEOMetadata({
       title: "Blog Post | Deen Bridge",
       description: "Read our latest Islamic education articles and insights.",

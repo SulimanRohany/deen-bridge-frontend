@@ -19,7 +19,6 @@ export default function SurahSelector({ selectedSurah, onSelectSurah }) {
         const response = await quranAPI.getSurahs()
         setSurahs(response.data)
       } catch (error) {
-        console.error('Error fetching surahs:', error)
       } finally {
         setLoading(false)
       }

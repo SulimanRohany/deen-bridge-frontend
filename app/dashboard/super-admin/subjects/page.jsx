@@ -93,7 +93,6 @@ export default function SubjectsPage() {
       const parsedTokens = JSON.parse(authTokens);
       return parsedTokens.access;
     } catch (error) {
-      console.error('Error parsing authTokens:', error);
       toast.error('Invalid authentication data. Please login again.');
       router.push('/login');
       return null;
@@ -165,7 +164,6 @@ export default function SubjectsPage() {
 
   // Handle API errors
   const handleApiError = (error, defaultMessage) => {
-    console.error('API Error:', error);
     
     if (error.response) {
       // Handle specific status codes

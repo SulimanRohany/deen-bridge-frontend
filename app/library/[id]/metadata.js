@@ -41,7 +41,6 @@ export async function generateMetadata({ params }) {
       modifiedTime: resource.updated_at,
     });
   } catch (error) {
-    console.error('Error generating library metadata:', error);
     return generateSEOMetadata({
       title: "Library Resource | Deen Bridge",
       description: "Browse our comprehensive Islamic library resources.",

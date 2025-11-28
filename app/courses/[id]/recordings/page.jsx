@@ -120,7 +120,6 @@ export default function CourseRecordingsPage() {
       setNextUrl(data.next ?? null)
       setPrevUrl(data.previous ?? null)
     } catch (e) {
-      console.error(e)
       setError('Failed to load recordings.')
       setRecords([])
       setCount(0)

@@ -207,7 +207,6 @@ Please respond within 10 minutes!`
       setTouched({})
       onOpenChange(false)
     } catch (error) {
-      console.error('Error submitting request:', error)
       toast.error('Failed to submit request', {
         description: error.message || 'Please try again later'
       })

@@ -185,8 +185,8 @@ export default function HeaderNav() {
               </nav>
             </div>
 
-            {/* Mobile - Left section: Menu button and Logo */}
-            <div className="flex md:hidden items-center gap-3">
+            {/* Mobile - Left section: Menu button only */}
+            <div className="flex md:hidden items-center">
               <Button
                 variant="ghost"
                 size="icon"
@@ -195,17 +195,6 @@ export default function HeaderNav() {
               >
                 <IconMenu2 className="h-6 w-6" />
               </Button>
-              <Link href="/" className="inline-block">
-                <div className="w-12 h-12 rounded-xl flex items-center justify-center shadow-lg ring-2 ring-primary/30 bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 border border-gray-200 dark:border-gray-700">
-                  <Image 
-                    src="/Transparent Version of Logo.png" 
-                    alt="Deen Bridge Logo" 
-                    width={48} 
-                    height={48}
-                    className={`object-contain drop-shadow-md w-full h-full transition-all ${resolvedTheme === 'dark' ? 'brightness-0 invert' : ''}`}
-                  />
-                </div>
-              </Link>
             </div>
 
             {/* Desktop - Center: Search bar */}
@@ -364,6 +353,19 @@ export default function HeaderNav() {
                   </Button>
                 </div>
               )}
+
+              {/* Mobile - Logo on the absolute right */}
+              <Link href="/" className="inline-block md:hidden ml-auto">
+                <div className="w-12 h-12 rounded-xl flex items-center justify-center shadow-lg ring-2 ring-primary/30 bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 border border-gray-200 dark:border-gray-700">
+                  <Image 
+                    src="/Transparent Version of Logo.png" 
+                    alt="Deen Bridge Logo" 
+                    width={48} 
+                    height={48}
+                    className={`object-contain drop-shadow-md w-full h-full transition-all ${resolvedTheme === 'dark' ? 'brightness-0 invert' : ''}`}
+                  />
+                </div>
+              </Link>
             </div>
           </div>
 

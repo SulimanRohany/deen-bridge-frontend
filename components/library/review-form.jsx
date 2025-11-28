@@ -74,7 +74,6 @@ export default function ReviewForm({
       setReview('')
       onOpenChange(false)
     } catch (error) {
-      console.error('Error submitting review:', error)
       
       // Handle duplicate review error
       if (error.response?.data?.detail && error.response.data.detail.includes('already reviewed')) {

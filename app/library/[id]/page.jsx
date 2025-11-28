@@ -90,7 +90,6 @@ export default function ResourceDetailPage() {
     return () => {
       const timeSpent = Math.round((Date.now() - startTime) / 1000) // in seconds
       // You can send analytics here
-      console.log(`User spent ${timeSpent} seconds on this page`)
     }
   }, [])
 
@@ -103,7 +102,6 @@ export default function ResourceDetailPage() {
   useEffect(() => {
     const autoDownload = searchParams.get('autoDownload')
     if (autoDownload === 'true' && userData && resource && !downloadTriggered) {
-      console.log('🎯 Auto-downloading after login...')
       setDownloadTriggered(true)
       // Small delay to ensure everything is loaded
       setTimeout(() => {
@@ -120,11 +118,9 @@ export default function ResourceDetailPage() {
 
     try {
       const response = await libraryAPI.getResourceById(resourceId)
-      console.log('Resource data from backend:', response.data)
       setResource(response.data)
       setIsBookmarked(response.data.is_bookmarked)
     } catch (err) {
-      console.error('Error fetching resource:', err)
       setError('Failed to load resource. Please try again.')
       toast.error('Failed to load resource')
     } finally {
@@ -137,7 +133,6 @@ export default function ResourceDetailPage() {
       const response = await libraryAPI.getRelatedResources(resourceId)
       setRelatedResources(response.data || [])
     } catch (err) {
-      console.error('Error fetching related resources:', err)
     }
   }
 
@@ -155,7 +150,6 @@ export default function ResourceDetailPage() {
       setIsBookmarked(response.data.bookmarked)
       toast.success(response.data.bookmarked ? 'Added to bookmarks' : 'Removed from bookmarks')
     } catch (error) {
-      console.error('Error toggling bookmark:', error)
       toast.error('Failed to update bookmark')
     } finally {
       setBookmarkLoading(false)
@@ -205,7 +199,6 @@ export default function ResourceDetailPage() {
         toast.error('No PDF file available for this resource')
       }
     } catch (error) {
-      console.error('Error downloading resource:', error)
       if (error.response?.status === 401 || error.response?.status === 403) {
         toast.error('Please login to download resources')
       } else if (error.response?.status === 404) {
@@ -230,7 +223,6 @@ export default function ResourceDetailPage() {
         toast.success('Link copied to clipboard')
       }
     } catch (error) {
-      console.error('Error sharing:', error)
     }
   }
 

@@ -128,7 +128,6 @@ export default function TeacherCoursesPage() {
         setTotalPages(1);
       }
     } catch (err) {
-      console.error('Error fetching classes:', err);
       setError(err.response?.data?.error || err.message || 'Failed to load classes');
       toast.error('Failed to load classes');
     } finally {

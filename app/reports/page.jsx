@@ -137,7 +137,6 @@ export default function ReportsPage() {
       const parsedTokens = JSON.parse(authTokens);
       return parsedTokens.access;
     } catch (error) {
-      console.error('Error parsing authTokens:', error);
       toast.error('Invalid authentication data. Please login again.');
       router.push('/login');
       return null;
@@ -175,7 +174,6 @@ export default function ReportsPage() {
       // Backend already filters by user, so we don't need to filter again
       setReports(reportsList);
     } catch (error) {
-      console.error('Failed to fetch reports:', error);
       if (error.message !== 'Authentication required. Please login again.') {
         toast.error('Failed to load your reports');
       }
@@ -302,7 +300,6 @@ export default function ReportsPage() {
       }, 500);
       
     } catch (error) {
-      console.error('Error submitting report:', error);
       if (error.response?.status === 400) {
         const backendErrors = error.response.data;
         const formErrors = {};
@@ -431,7 +428,6 @@ export default function ReportsPage() {
       fetchReports();
       
     } catch (error) {
-      console.error('Error updating report:', error);
       if (error.response?.status === 400) {
         const backendErrors = error.response.data;
         const formErrors = {};

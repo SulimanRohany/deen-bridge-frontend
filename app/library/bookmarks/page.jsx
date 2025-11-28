@@ -40,7 +40,6 @@ export default function BookmarksPage() {
       
       setBookmarks(mappedBookmarks)
     } catch (err) {
-      console.error('Error fetching bookmarks:', err)
       
       if (err.response?.status === 401 || err.response?.status === 403) {
         setError('Please login to view your bookmarks')
@@ -61,7 +60,6 @@ export default function BookmarksPage() {
       setBookmarks(bookmarks.filter(b => b.resource?.id !== resourceId))
       toast.success('Removed from bookmarks')
     } catch (error) {
-      console.error('Error removing bookmark:', error)
       toast.error('Failed to remove bookmark')
     }
   }

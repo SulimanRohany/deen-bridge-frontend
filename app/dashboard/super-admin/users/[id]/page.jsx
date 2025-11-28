@@ -131,7 +131,6 @@ export default function UserProfilePage() {
       const parsedTokens = JSON.parse(authTokens);
       return parsedTokens.access;
     } catch (error) {
-      console.error('Error parsing authTokens:', error);
       toast.error('Invalid authentication data. Please login again.');
       router.push('/login');
       return null;
@@ -185,7 +184,6 @@ export default function UserProfilePage() {
         },
       });
     } catch (error) {
-      console.error('Error fetching user data:', error);
       toast.error('Failed to load user profile');
     } finally {
       setLoading(false);
@@ -231,7 +229,6 @@ export default function UserProfilePage() {
       setEditing(false);
       fetchUserData(); // Refresh data
     } catch (error) {
-      console.error('Error updating profile:', error);
       toast.error('Failed to update profile');
     } finally {
       setSubmitting(false);

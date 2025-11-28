@@ -74,7 +74,6 @@ export default function LibraryPage() {
         const response = await libraryAPI.getCategories()
         setCategories(response.data || [])
       } catch (err) {
-        console.error('Error fetching categories:', err)
       }
     }
     fetchCategories()
@@ -87,7 +86,6 @@ export default function LibraryPage() {
         const response = await libraryAPI.getFeaturedResources()
         setFeaturedResources(response.data || [])
       } catch (err) {
-        console.error('Error fetching featured resources:', err)
       }
     }
     fetchFeatured()
@@ -135,7 +133,6 @@ export default function LibraryPage() {
       setNextUrl(data.links?.next || data.next || null)
       setPrevUrl(data.links?.previous || data.previous || null)
     } catch (err) {
-      console.error('Error fetching resources:', err)
       setError('Failed to load resources. Please try again.')
       toast.error('Failed to load resources')
       setResources([])

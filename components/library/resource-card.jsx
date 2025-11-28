@@ -64,7 +64,6 @@ export default function ResourceCard({ resource, onBookmarkChange }) {
         onBookmarkChange(resource.id, newBookmarkedState)
       }
     } catch (error) {
-      console.error('Error toggling bookmark:', error)
       toast.error('Failed to update bookmark. Please try again.')
     } finally {
       setBookmarkLoading(false)

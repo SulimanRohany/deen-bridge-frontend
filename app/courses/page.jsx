@@ -80,7 +80,6 @@ function useLocalStorage(key, initialValue) {
       const item = window.localStorage.getItem(key)
       return item ? JSON.parse(item) : initialValue
     } catch (error) {
-      console.error('Error reading from localStorage:', error)
       return initialValue
     }
   })
@@ -94,7 +93,6 @@ function useLocalStorage(key, initialValue) {
         window.localStorage.setItem(key, JSON.stringify(valueToStore))
       }
     } catch (error) {
-      console.error('Error writing to localStorage:', error)
     }
   }
 
@@ -198,11 +196,6 @@ function LiveCourseCard({ course, onEnroll, liveSessions = [] }) {
   const additionalSubjectsCount = (course.subjects || []).length - 1
 
   // Debug logging for course data
-  console.log('Course data for', course.title, ':', {
-    cover_image: course.cover_image,
-    has_cover_image: !!course.cover_image,
-    course_keys: Object.keys(course)
-  })
 
   return (
     <Card className="relative flex flex-col h-full overflow-hidden transition-all duration-500 hover:-translate-y-2 border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-2xl shadow-md hover:shadow-xl group">
@@ -216,12 +209,10 @@ function LiveCourseCard({ course, onEnroll, liveSessions = [] }) {
               alt={course.title}
               className="w-full h-full object-cover transition-all duration-500 group-hover:scale-105"
               onError={(e) => {
-                console.log('Image failed to load:', course.cover_image);
                 e.target.style.display = 'none';
                 e.target.parentElement.querySelector('.placeholder-cover').style.display = 'flex';
               }}
               onLoad={() => {
-                console.log('Image loaded successfully:', course.cover_image);
               }}
             />
           ) : null}
@@ -475,14 +466,11 @@ export default function LiveCoursesPage() {
         const items = toList(coursesRes.data)
         const sessions = toList(liveSessionsRes.data)
         
-        console.log('Fetched courses for public page:', items);
-        console.log('Fetched live sessions:', sessions);
         
         setCourses(items)
         setFilteredCourses(items)
         setLiveSessions(sessions)
       } catch (err) {
-        console.error('Error fetching courses:', err)
         setError('Failed to load classes. Please try again later.')
       } finally {
         setLoading(false)

@@ -206,7 +206,6 @@ export default function MyLearningPage() {
         setSessions(allSessions)
         setSessionsLoading(false)
       } catch (err) {
-        console.error(err)
         setError('Failed to load My Learning.')
         setSessionsError('Failed to load sessions.')
         setSessionsLoading(false)
@@ -1009,12 +1008,10 @@ function EnhancedCourseCard({ course }) {
               alt={course.title}
               className="w-full h-full object-cover transition-all duration-500 group-hover:scale-105"
               onError={(e) => {
-                console.log('Image failed to load:', course.cover_image);
                 e.target.style.display = 'none';
                 e.target.parentElement.querySelector('.placeholder-cover').style.display = 'flex';
               }}
               onLoad={() => {
-                console.log('Image loaded successfully:', course.cover_image);
               }}
             />
           ) : null}

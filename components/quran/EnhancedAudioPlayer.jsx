@@ -126,12 +126,10 @@ export default function EnhancedAudioPlayer({
   const handleAudioError = useCallback((error) => {
     // Ignore AbortError - it's expected when switching tracks
     if (error?.name === 'AbortError') {
-      console.log('⏭️ Play aborted (switching tracks) - ignoring error')
       setIsLoading(false)
       return
     }
     
-    console.error('Audio error:', error)
     setIsLoading(false)
     
     if (retryCount < maxRetries) {
@@ -143,7 +141,6 @@ export default function EnhancedAudioPlayer({
           if (!audioRef.current.paused) {
             audioRef.current.play().catch(err => {
               if (err.name !== 'AbortError') {
-                console.error('Retry failed:', err)
               }
             })
           }
@@ -163,7 +160,6 @@ export default function EnhancedAudioPlayer({
       if (nextAudioRef.current) {
         nextAudioRef.current.src = nextUrl
         nextAudioRef.current.load()
-        console.log('🔄 Preloading next verse:', nextVerse.number)
       }
     }
   }, [playbackMode, currentVerseIndex, verses, surahNumber, selectedReciter])
@@ -173,13 +169,11 @@ export default function EnhancedAudioPlayer({
     if (verses.length > 0 && currentVerse) {
       // Prevent concurrent switches - CRITICAL for preventing hangs
       if (switchingRef.current) {
-        console.log('⏳ Switch already in progress, queuing...')
         return
       }
       
       // Skip if same verse (unless reciter changed)
       if (lastVerseRef.current === currentVerse && audioRef.current?.src) {
-        console.log('⏭️ Same ayah, skipping switch')
         return
       }
       
@@ -201,16 +195,13 @@ export default function EnhancedAudioPlayer({
           // CRITICAL FIX: Store if audio was playing before the switch
           const wasPlaying = !audioRef.current.paused && isPlaying
           
-          console.log(`🔄 Switching to ayah ${currentVerse}, wasPlaying: ${wasPlaying}`)
           
           // CRITICAL FIX: Wait for any pending play promise to settle
           if (playPromiseRef.current) {
             playPromiseRef.current
               .then(() => {
-                console.log('Previous play promise resolved')
               })
               .catch(() => {
-                console.log('Previous play promise rejected')
               })
               .finally(() => {
                 playPromiseRef.current = null
@@ -222,7 +213,6 @@ export default function EnhancedAudioPlayer({
             audioRef.current.pause()
             audioRef.current.currentTime = 0
           } catch (err) {
-            console.warn('⚠️ Error pausing audio:', err)
           }
           
           // CRITICAL FIX: Clear any pending operations
@@ -239,7 +229,6 @@ export default function EnhancedAudioPlayer({
                 // CRITICAL FIX: Wait for audio to be ready before playing
                 const handleCanPlay = () => {
                   if (audioRef.current && wasPlaying) {
-                    console.log('✅ Audio ready, playing ayah:', currentVerse)
                     
                     // Store the play promise
                     playPromiseRef.current = audioRef.current.play()
@@ -247,7 +236,6 @@ export default function EnhancedAudioPlayer({
                     if (playPromiseRef.current !== undefined) {
                       playPromiseRef.current
                         .then(() => {
-                          console.log('✅ Successfully switched to ayah:', currentVerse)
                           playPromiseRef.current = null
                           setIsLoading(false)
                           switchingRef.current = false // Unlock
@@ -255,9 +243,7 @@ export default function EnhancedAudioPlayer({
                         .catch(err => {
                           // Ignore AbortError - it's expected when switching
                           if (err.name === 'AbortError') {
-                            console.log('⏭️ Play aborted (switching tracks)')
                           } else {
-                            console.error('❌ Error playing audio after switch:', err)
                             handleAudioError(err)
                           }
                           playPromiseRef.current = null
@@ -285,14 +271,12 @@ export default function EnhancedAudioPlayer({
                 // Timeout fallback in case canplay doesn't fire
                 setTimeout(() => {
                   if (switchingRef.current) {
-                    console.warn('⚠️ Canplay timeout, forcing unlock')
                     setIsLoading(false)
                     switchingRef.current = false
                   }
                 }, 5000)
                 
               } catch (err) {
-                console.error('❌ Critical error during switch:', err)
                 setIsLoading(false)
                 switchingRef.current = false // Unlock
                 setAudioError('Failed to switch ayah. Please try again.')
@@ -316,7 +300,6 @@ export default function EnhancedAudioPlayer({
     if (triggerPlay && audioRef.current && audioRef.current.src) {
       setRepeatCount(0)
       audioRef.current.play().catch(err => {
-        console.error('Error playing audio:', err)
         handleAudioError(err)
       })
     }
@@ -346,7 +329,6 @@ export default function EnhancedAudioPlayer({
                 }
               }
               audioRef.current.play().catch(err => {
-                console.error('Error playing audio:', err)
               })
             } else {
               audioRef.current.pause()
@@ -383,7 +365,6 @@ export default function EnhancedAudioPlayer({
           if (audioRef.current) {
             audioRef.current.currentTime = 0
             audioRef.current.play().catch(err => {
-              console.error('Error replaying:', err)
             })
           }
           break
@@ -401,7 +382,6 @@ export default function EnhancedAudioPlayer({
     
     // Prevent action during switching
     if (switchingRef.current) {
-      console.log('⏳ Audio is switching, please wait...')
       toast.info('Switching ayah, please wait...', { duration: 1000 })
       return
     }
@@ -419,7 +399,6 @@ export default function EnhancedAudioPlayer({
       playPromiseRef.current = audioRef.current.play()
       playPromiseRef.current.catch(err => {
         if (err.name !== 'AbortError') {
-          console.error('Error playing audio:', err)
           handleAudioError(err)
         }
         playPromiseRef.current = null
@@ -478,7 +457,6 @@ export default function EnhancedAudioPlayer({
 
   const handleSkipNext = () => {
     if (switchingRef.current) {
-      console.log('⏳ Switch in progress, skipping...')
       return
     }
     if (currentVerseIndex < verses.length - 1) {
@@ -486,7 +464,6 @@ export default function EnhancedAudioPlayer({
       
       // 🔐 Check if next verse is restricted for unauthenticated users
       if (!userData && nextVerse.number > MAX_FREE_VERSES) {
-        console.log('🔒 Next verse restricted - redirecting to auth')
         setIsPlaying(false)
         if (onPlayStateChange) onPlayStateChange(false)
         requireAuthentication('quran_listen', {
@@ -504,7 +481,6 @@ export default function EnhancedAudioPlayer({
 
   const handleSkipPrevious = () => {
     if (switchingRef.current) {
-      console.log('⏳ Switch in progress, skipping...')
       return
     }
     if (currentVerseIndex > 0) {
@@ -522,7 +498,6 @@ export default function EnhancedAudioPlayer({
   }
 
   const handleModeChange = (mode) => {
-    console.log('🎯 Changing playback mode to:', mode)
     setPlaybackMode(mode)
     setRepeatCount(0)
     
@@ -618,10 +593,8 @@ export default function EnhancedAudioPlayer({
           onLoadStart={() => setIsLoading(true)}
           onError={(e) => handleAudioError(e.target.error)}
           onEnded={() => {
-            console.log('🎵 Audio ended. Mode:', playbackMode)
             
             if (playbackMode === 'single') {
-              console.log('✋ Single Ayah mode - stopping after verse', currentVerse)
               setIsPlaying(false)
               if (onPlayStateChange) onPlayStateChange(false)
               toast.success(`Ayah ${currentVerse} completed`, {
@@ -630,7 +603,6 @@ export default function EnhancedAudioPlayer({
               })
               
             } else if (playbackMode === 'repeat') {
-              console.log('🔁 Repeat mode - replaying ayah', currentVerse)
               setTimeout(() => {
                 if (audioRef.current && audioRef.current.src) {
                   audioRef.current.currentTime = 0
@@ -642,14 +614,11 @@ export default function EnhancedAudioPlayer({
               }, 500)
               
             } else {
-              console.log('📖 Continuous mode - auto-advancing to next ayah')
               if (currentVerseIndex < verses.length - 1) {
                 const nextVerse = verses[currentVerseIndex + 1]
-                console.log('⏭️ Playing next ayah:', nextVerse.number)
                 
                 // 🔐 Check if next verse is restricted for unauthenticated users
                 if (!userData && nextVerse.number > MAX_FREE_VERSES) {
-                  console.log('🔒 Playback restricted - redirecting to auth')
                   setIsPlaying(false)
                   if (onPlayStateChange) onPlayStateChange(false)
                   requireAuthentication('quran_listen', {
@@ -684,16 +653,13 @@ export default function EnhancedAudioPlayer({
                       audioRef.current.load()
                       playPromiseRef.current = audioRef.current.play()
                       playPromiseRef.current.then(() => {
-                        console.log('✅ Playing ayah', nextVerse.number)
                         playPromiseRef.current = null
                         // Preload next after successful play
                         preloadNextVerse()
                       }).catch(err => {
                         // Ignore AbortError - it's expected when switching tracks
                         if (err.name === 'AbortError') {
-                          console.log('⏭️ Play aborted during continuous mode (user switched tracks)')
                         } else {
-                          console.error('❌ Error playing next ayah:', err)
                           handleAudioError(err)
                         }
                         playPromiseRef.current = null
@@ -706,7 +672,6 @@ export default function EnhancedAudioPlayer({
               } else {
                 // If unauthenticated user has reached the preview limit but more verses exist, redirect
                 if (!userData && totalVerses > verses.length && (verses[verses.length - 1]?.number || 0) >= MAX_FREE_VERSES) {
-                  console.log('🔒 Playback restricted at end of preview - redirecting to auth')
                   setIsPlaying(false)
                   if (onPlayStateChange) onPlayStateChange(false)
                   requireAuthentication('quran_listen', {
@@ -715,7 +680,6 @@ export default function EnhancedAudioPlayer({
                   })
                   toast.info(`Free preview ends at ${MAX_FREE_VERSES} verses. Log in to continue listening.`)
                 } else {
-                  console.log('🎊 Surah completed!')
                   setIsPlaying(false)
                   if (onPlayStateChange) onPlayStateChange(false)
                 }

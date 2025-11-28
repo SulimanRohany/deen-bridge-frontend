@@ -71,7 +71,6 @@ export default function SuperAdminDashboard() {
       setDashboardData(response.data);
       // toast.success('Dashboard data loaded successfully');
     } catch (err) {
-      console.error('Error fetching dashboard data:', err);
       setError(err.response?.data?.error || err.message || 'Failed to load dashboard data');
       toast.error('Failed to load dashboard data');
     } finally {

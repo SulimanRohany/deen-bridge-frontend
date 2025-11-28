@@ -31,29 +31,21 @@ export default function BlogPostPage({ params }) {
     const fetchPost = async () => {
       try {
         setLoading(true)
-        console.log('Fetching post with slug:', slug)
         const response = await blogAPI.getPostBySlug(slug)
-        console.log('Post response:', response.data)
         setPost(response.data)
         
         // Fetch related posts
         if (response.data.tags && response.data.tags.length > 0) {
-          console.log('Fetching related posts for tag:', response.data.tags[0])
           try {
             const tagResponse = await blogAPI.getPosts({ tag: response.data.tags[0], limit: 3 })
-            console.log('Related posts response:', tagResponse.data)
             setRelatedPosts(tagResponse.data.filter(p => p.id !== response.data.id))
           } catch (tagError) {
-            console.error('Error fetching related posts:', tagError)
             setRelatedPosts([])
           }
         } else {
-          console.log('No tags found for post, skipping related posts')
           setRelatedPosts([])
         }
       } catch (error) {
-        console.error('Error fetching post:', error)
-        console.error('Error details:', error.response?.data || error.message)
         notFound()
       } finally {
         setLoading(false)

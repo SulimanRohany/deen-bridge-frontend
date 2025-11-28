@@ -89,7 +89,6 @@ export function ControlPanel({
           setConnectionQuality(stats);
         }
       } catch (error) {
-        console.error('Error fetching connection stats:', error);
       }
     };
 
@@ -126,7 +125,6 @@ export function ControlPanel({
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
     } catch (error) {
-      console.error("Failed to copy room ID:", error)
     }
   }
 

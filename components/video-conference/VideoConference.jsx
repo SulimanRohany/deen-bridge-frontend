@@ -46,7 +46,6 @@ export function VideoConference({ roomId, onRoomCreated, onRoomJoined }) {
   } = useSFU({
     autoConnect: true,
     onError: (error) => {
-      console.error('SFU Error:', error);
     }
   });
 
@@ -77,7 +76,6 @@ export function VideoConference({ roomId, onRoomCreated, onRoomJoined }) {
       setRoomName('');
       setRoomDescription('');
     } catch (error) {
-      console.error('Failed to create room:', error);
     } finally {
       setIsCreatingRoom(false);
     }
@@ -94,7 +92,6 @@ export function VideoConference({ roomId, onRoomCreated, onRoomJoined }) {
       setJoinRoomId('');
       setDisplayName('');
     } catch (error) {
-      console.error('Failed to join room:', error);
     } finally {
       setIsJoiningRoom(false);
     }
@@ -104,7 +101,6 @@ export function VideoConference({ roomId, onRoomCreated, onRoomJoined }) {
     try {
       await leaveRoom();
     } catch (error) {
-      console.error('Failed to leave room:', error);
     }
   };
 
@@ -112,7 +108,6 @@ export function VideoConference({ roomId, onRoomCreated, onRoomJoined }) {
     try {
       await startMedia();
     } catch (error) {
-      console.error('Failed to start media:', error);
     }
   };
 
@@ -120,7 +115,6 @@ export function VideoConference({ roomId, onRoomCreated, onRoomJoined }) {
     try {
       await stopMedia();
     } catch (error) {
-      console.error('Failed to stop media:', error);
     }
   };
 

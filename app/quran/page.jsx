@@ -117,11 +117,9 @@ export default function QuranPage() {
       if (userData?.id) {
         // Save user-specific preference
         localStorage.setItem(`quran_reciter_user_${userData.id}`, selectedReciter)
-        console.log(`✅ Saved reciter preference for user ${userData.id}:`, selectedReciter)
       } else {
         // Save general preference for guest users
         localStorage.setItem('quran_reciter', selectedReciter)
-        console.log('✅ Saved reciter preference for guest:', selectedReciter)
       }
     }
   }, [selectedReciter, userData, mounted])
@@ -133,11 +131,9 @@ export default function QuranPage() {
   }
 
   const handleVersePlay = (verseNumber) => {
-    console.log('🎵 Play button clicked for ayah:', verseNumber)
     
     // Prevent rapid clicks
     if (currentVerse === verseNumber && isAudioPlaying) {
-      console.log('⏸️ Same ayah already playing, ignoring duplicate click')
       return
     }
     

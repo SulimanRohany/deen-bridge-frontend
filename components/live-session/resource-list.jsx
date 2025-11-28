@@ -66,7 +66,6 @@ export default function ResourceList({ sessionId, canManage = false }) {
 
       setResources(response.data.results || response.data || [])
     } catch (error) {
-      console.error('Error fetching resources:', error)
       toast.error('Failed to load resources')
     } finally {
       setLoading(false)
@@ -137,7 +136,6 @@ export default function ResourceList({ sessionId, canManage = false }) {
       
       toast.success(`Downloaded ${resource.title}`)
     } catch (error) {
-      console.error('Error downloading file:', error)
       toast.error('Failed to download file')
     }
   }
@@ -168,7 +166,6 @@ export default function ResourceList({ sessionId, canManage = false }) {
       setDeleteDialogOpen(false)
       setResourceToDelete(null)
     } catch (error) {
-      console.error('Error deleting resource:', error)
       toast.error('Failed to delete resource')
     }
   }

@@ -16,17 +16,14 @@ export function ParticipantManagement({ participants, isOpen, onToggle }) {
   const [isHost] = useState(true) // Simulate host privileges
 
   const handleMuteParticipant = (participantId) => {
-    console.log("[v0] Muting participant:", participantId)
     // In a real app, this would send a signal to mute the participant
   }
 
   const handleRemoveParticipant = (participantId) => {
-    console.log("[v0] Removing participant:", participantId)
     // In a real app, this would disconnect the participant
   }
 
   if (!isOpen) return null
-{console.log('participants',participants)}
   const allParticipants = [
     {
       id: "local",

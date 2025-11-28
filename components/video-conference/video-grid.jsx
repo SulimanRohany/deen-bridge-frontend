@@ -48,7 +48,6 @@ export function VideoGrid({ localStream, participants, remoteStreams, remotePart
     .filter((p) => {
       // Safety check: ensure currentUserId is defined
       if (!currentUserId) {
-        console.warn('currentUserId is undefined in VideoGrid, cannot filter participants properly');
         return true; // Include all if we can't filter
       }
       // IMPORTANT: Convert currentUserId to string for comparison (Django returns number, SFU returns string)
@@ -131,16 +130,6 @@ export function VideoGrid({ localStream, participants, remoteStreams, remotePart
   // Debug logging - only log when actual values change, not on every render
   useEffect(() => {
     if (process.env.NODE_ENV === 'development') {
-      console.log('📺 VideoGrid rendering:', {
-        currentUserId,
-        localParticipantId: localParticipant?.id,
-        isObserverMode,
-        totalParticipants: participants.length,
-        remoteStreamsMapSize: remoteStreams.size,
-        filteredRemoteCount: filteredRemoteParticipants.length,
-        totalRendered: allParticipants.length,
-        streamUpdateCounter
-      });
     }
   }, [participants.length, currentUserId, remoteStreams.size, filteredRemoteParticipants.length, allParticipants.length, streamUpdateCounter, localParticipant?.id, isObserverMode]);
 
@@ -380,47 +369,19 @@ const VideoTile = function VideoTile({
   useEffect(() => {
     const videoElement = isLocal ? localVideoRef?.current : videoRef.current;
     
-    console.log(`🎬 VideoTile useEffect for ${participant.name}:`, {
-      participantId: participant.id,
-      isLocal,
-      hasStream: !!participant.stream,
-      streamId: participant.stream?.id,
-      streamActive: participant.stream?.active,
-      streamTracks: participant.stream?.getTracks().length || 0,
-      hasVideoElement: !!videoElement,
-      videoElementId: videoElement?.id,
-      isVideoEnabled: participant.isVideoEnabled
-    });
 
     if (videoElement && participant.stream) {
-      console.log(`✅ Setting ${isLocal ? 'local' : 'remote'} video stream for ${participant.name}:`, {
-        participantId: participant.id,
-        streamId: participant.stream.id,
-        streamActive: participant.stream.active,
-        tracks: participant.stream.getTracks().map(t => ({ 
-          kind: t.kind, 
-          enabled: t.enabled, 
-          readyState: t.readyState,
-          muted: t.muted 
-        }))
-      });
       
       videoElement.srcObject = participant.stream;
       
       // Force play for remote streams to handle autoplay restrictions
       if (!isLocal) {
         videoElement.play().catch(err => {
-          console.warn(`⚠️ Failed to autoplay video for ${participant.name}:`, err.message);
         });
       }
     } else if (!isLocal && !participant.stream) {
       // For remote participants without a stream yet, this is normal during initial join
       // Don't log as an error, just as info
-      console.log(`ℹ️ No video stream available yet for ${participant.name} (this is normal during initial join):`, {
-        participantId: participant.id,
-        hasVideoElement: !!videoElement,
-        isVideoEnabled: participant.isVideoEnabled
-      });
       
       // Clear any existing srcObject to avoid showing stale video
       if (videoElement && videoElement.srcObject) {
@@ -429,10 +390,6 @@ const VideoTile = function VideoTile({
     } else if (isLocal && !participant.stream) {
       // For local participant, this might happen during cleanup/unmount
       // Log as warning instead of error
-      console.warn(`⚠️ Local participant missing stream (may be during cleanup):`, {
-        participantId: participant.id,
-        hasVideoElement: !!videoElement
-      });
       
       // Clear srcObject to avoid showing stale video
       if (videoElement && videoElement.srcObject) {
@@ -447,38 +404,16 @@ const VideoTile = function VideoTile({
     
     const audioElement = audioRef.current;
     
-    console.log(`🔊 AudioTile useEffect for ${participant.name}:`, {
-      participantId: participant.id,
-      hasAudioStream: !!participant.audioStream,
-      audioStreamId: participant.audioStream?.id,
-      audioStreamActive: participant.audioStream?.active,
-      audioTracks: participant.audioStream?.getTracks().length || 0,
-      hasAudioElement: !!audioElement
-    });
 
     if (audioElement && participant.audioStream) {
-      console.log(`✅ Setting audio stream for ${participant.name}:`, {
-        participantId: participant.id,
-        streamId: participant.audioStream.id,
-        streamActive: participant.audioStream.active,
-        tracks: participant.audioStream.getTracks().map(t => ({ 
-          kind: t.kind, 
-          enabled: t.enabled, 
-          readyState: t.readyState,
-          muted: t.muted 
-        }))
-      });
       
       audioElement.srcObject = participant.audioStream;
       
       // Ensure audio plays automatically
       audioElement.play().catch(e => {
-        console.error(`❌ Failed to auto-play audio for ${participant.name}:`, e.message);
       });
     } else if (!participant.audioStream) {
-      console.log(`ℹ️ No audio stream for ${participant.name}`);
     } else if (!audioElement) {
-      console.error(`❌ No audio element for ${participant.name}`);
     }
   }, [participant.audioStream, participant.id, isLocal, participant.name])
 
@@ -495,12 +430,6 @@ const VideoTile = function VideoTile({
     if (process.env.NODE_ENV === 'development' && !isLocal && participant.stream) {
       const videoTrack = participant.stream.getTracks().find(t => t.kind === 'video')
       if (videoTrack) {
-        console.log(`🔍 Track check for ${participant.name}:`, {
-          trackEnabled: videoTrack.enabled,
-          trackMuted: videoTrack.muted,
-          participantIsVideoEnabled: participant.isVideoEnabled,
-          willShowVideo: shouldShowVideo
-        })
       }
     }
   }, [participant.stream, participant.isVideoEnabled, shouldShowVideo, isLocal, participant.name]);

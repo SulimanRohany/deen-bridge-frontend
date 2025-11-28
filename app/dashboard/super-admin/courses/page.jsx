@@ -133,7 +133,6 @@ export default function ClassesPage() {
       const parsedTokens = JSON.parse(authTokens);
       return parsedTokens.access;
     } catch (error) {
-      console.error('Error parsing authTokens:', error);
       toast.error('Invalid authentication data. Please login again.');
       router.push('/login');
       return null;
@@ -178,7 +177,6 @@ export default function ClassesPage() {
         classParams.is_special_class = specialClassFilter === 'special';
       }
       
-      console.log('Class API params:', classParams);
       
       const [classesRes, subjectsRes, teachersRes] = await Promise.all([
         api.get('course/', { params: classParams }),
@@ -186,7 +184,6 @@ export default function ClassesPage() {
         api.get('auth/user/?role=teacher')
       ]);
       
-      console.log('Fetched classes response:', classesRes.data);
       
       // Handle paginated response
       if (classesRes.data.results) {
@@ -215,7 +212,6 @@ export default function ClassesPage() {
 
   // Handle API errors
   const handleApiError = (error, defaultMessage) => {
-    console.error('API Error:', error);
     if (error.response) {
       if (error.response.status === 401) {
         toast.error('Session expired. Please login again.');
@@ -262,7 +258,6 @@ export default function ClassesPage() {
   // Handle file changes
   const handleFileChange = (e) => {
     const file = e.target.files[0];
-    console.log('File selected:', file);
     if (file) {
       setFormData({
         ...formData,
@@ -317,8 +312,6 @@ export default function ClassesPage() {
 
   // Open edit dialog
   const openEditDialog = (classItem) => {
-    console.log('Opening edit dialog for class:', classItem);
-    console.log('Class cover_image:', classItem.cover_image);
     setCurrentClass(classItem);
     setFormData({
       title: classItem.title,
@@ -359,8 +352,6 @@ export default function ClassesPage() {
     e.preventDefault();
     setErrors({});
     
-    console.log('Form data being submitted:', formData);
-    console.log('Cover image file:', formData.cover_image);
     
     // Client-side validation
     const validationErrors = {};
@@ -836,7 +827,6 @@ export default function ClassesPage() {
                         alt={currentClass.title}
                         className="w-full h-full object-cover absolute inset-0"
                         onError={(e) => {
-                          console.error('Image failed to load:', e.target.src);
                           e.target.style.display = 'none';
                         }}
                       />

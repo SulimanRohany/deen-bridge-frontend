@@ -43,14 +43,12 @@ export function useSFU(options = {}) {
     // Wait for auth tokens and user data to be available
     if (!authTokens?.access || !userData?.id) {
       if (process.env.NODE_ENV === 'development') {
-        console.log('Waiting for auth tokens and user data...');
       }
       return;
     }
 
     // Create client with available data
     if (process.env.NODE_ENV === 'development') {
-      console.log('Creating SFU client...');
     }
 
     const sfuConfig = {
@@ -60,14 +58,12 @@ export function useSFU(options = {}) {
       iceServers: config.ICE_SERVERS,
       onConnected: () => {
         if (process.env.NODE_ENV === 'development') {
-          console.log('SFU Connected');
         }
         setIsConnected(true);
         setIsConnecting(false);
       },
       onDisconnected: () => {
         if (process.env.NODE_ENV === 'development') {
-          console.log('SFU Disconnected - clearing all state');
         }
         setIsConnected(false);
         setIsInRoom(false);
@@ -79,7 +75,6 @@ export function useSFU(options = {}) {
         hasAttemptedConnectionRef.current = false;
       },
       onError: (error) => {
-        console.error('SFU Error:', error);
         options.onError?.(error);
         setIsConnecting(false);
         // Reset connection attempt flag to allow reconnection
@@ -89,21 +84,9 @@ export function useSFU(options = {}) {
         // IMPORTANT: Convert userData.id to string for comparison (Django returns number, SFU returns string)
         const currentUserIdString = String(userData?.id);
         
-        console.log('🔔 onParticipantJoined triggered:', {
-          participantUserId: participant.userId,
-          participantUserIdType: typeof participant.userId,
-          currentUserId: userData?.id,
-          currentUserIdString: currentUserIdString,
-          currentUserIdType: typeof userData?.id,
-          isCurrentUser: participant.userId === currentUserIdString,
-          participantId: participant.id,
-          displayName: participant.displayName,
-          fullParticipant: participant
-        });
         
         // Don't add ourselves to the participants list
         if (participant.userId === currentUserIdString) {
-          console.log('✅ CORRECTLY ignoring participantJoined event for current user');
           return;
         }
         
@@ -111,10 +94,8 @@ export function useSFU(options = {}) {
           // Check if participant already exists to avoid duplicates
           const exists = prev.some(p => p.id === participant.id);
           if (exists) {
-            console.log('⚠️ Participant already exists, not adding:', participant.id);
             return prev;
           }
-          console.log('✨ Adding new remote participant:', participant.id);
           return [...prev, participant];
         });
         
@@ -151,16 +132,9 @@ export function useSFU(options = {}) {
       },
       onProducerCreated: (producer, participantId) => {
         // Handle new producer from other participants
-        console.log('Producer created:', producer, 'for participant:', participantId);
       },
       onProducerMediaStateChanged: (data) => {
         // Handle when a producer is created (media enabled) or removed (media disabled)
-        console.log('🎬 Producer media state changed:', {
-          participantId: data.participantId,
-          kind: data.kind,
-          enabled: data.enabled,
-          isScreenShare: data.isScreenShare
-        });
         
         // Update the remote participant state
         setRemoteParticipants(prev => {
@@ -177,15 +151,7 @@ export function useSFU(options = {}) {
             // If it's a screen share video, don't update isVideoEnabled (camera state)
             // The screen share state is managed by onScreenShareStateChanged callback
             newMap.set(data.participantId, participant);
-            console.log('✅ Updated participant media state:', {
-              participantId: data.participantId,
-              kind: data.kind,
-              enabled: data.enabled,
-              isScreenShare: data.isScreenShare,
-              participantState: participant
-            });
           } else {
-            console.warn('⚠️ Participant not found for media state update:', data.participantId);
           }
           return newMap;
         });
@@ -195,10 +161,6 @@ export function useSFU(options = {}) {
       },
       onScreenShareStateChanged: (data) => {
         // Handle screen share state changes from remote participants
-        console.log('🖥️ Screen share state changed:', {
-          participantId: data.participantId,
-          isScreenSharing: data.isScreenSharing
-        });
         
         setScreenSharingParticipants(prev => {
           const newSet = new Set(prev);
@@ -223,14 +185,12 @@ export function useSFU(options = {}) {
         
         // If screen sharing stopped, clear the screen share stream so camera video shows
         if (!data.isScreenSharing) {
-          console.log('🖥️ Screen share stopped, clearing screen share stream for participant:', data.participantId);
           setRemoteStreams(prev => {
             const newMap = new Map(prev);
             const streams = newMap.get(data.participantId);
             if (streams) {
               streams.screenShare = null;
               newMap.set(data.participantId, streams);
-              console.log('✅ Cleared screen share stream, camera video should now show');
             }
             return newMap;
           });
@@ -241,32 +201,18 @@ export function useSFU(options = {}) {
       },
       onProducerClosed: (producerId) => {
         // Handle producer closed from other participants
-        console.log('Producer closed:', producerId);
       },
       onConsumerCreated: (consumer) => {
         // Handle new consumer for remote streams
-        console.log('Consumer created:', consumer);
       },
       onConsumerClosed: (consumerId) => {
         // Handle consumer closed
-        console.log('Consumer closed:', consumerId);
       },
       onRemoteStream: (streamData) => {
         // Handle new remote stream
         const { participantId, stream, kind, producerId, consumer } = streamData;
         const isScreenShare = consumer?.appData?.isScreenShare || false;
         
-        console.log('🎥 onRemoteStream callback triggered:', {
-          participantId,
-          participantIdType: typeof participantId,
-          kind,
-          producerId,
-          isScreenShare,
-          hasStream: !!stream,
-          streamId: stream?.id,
-          trackCount: stream?.getTracks().length,
-          trackMuted: stream?.getTracks()[0]?.muted
-        });
         
         setRemoteStreams(prev => {
           const newMap = new Map(prev);
@@ -275,42 +221,23 @@ export function useSFU(options = {}) {
           // Store screen share separately from camera video
           if (kind === 'video' && isScreenShare) {
             participantStreams.screenShare = stream;
-            console.log('📺 Stored as SCREEN SHARE stream');
           } else {
             participantStreams[kind] = stream;
-            console.log(`📺 Stored as ${kind.toUpperCase()} stream`);
           }
           
           newMap.set(participantId, participantStreams);
           
-          console.log('📊 Updated remote streams MAP:', {
-            storedWithParticipantId: participantId,
-            storedWithParticipantIdType: typeof participantId,
-            audioStream: !!participantStreams.audio,
-            videoStream: !!participantStreams.video,
-            screenShareStream: !!participantStreams.screenShare,
-            totalParticipantsWithStreams: newMap.size,
-            allKeysInMap: Array.from(newMap.keys()),
-            allKeysTypes: Array.from(newMap.keys()).map(k => typeof k)
-          });
           
           return newMap;
         });
         
         // Force re-render by incrementing counter
-        console.log('🔄 Forcing re-render due to stream update');
         setStreamUpdateCounter(prev => prev + 1);
         
         // Also log current participants to compare IDs
-        console.log('🔄 Current participants in state:', participants.map(p => ({
-          id: p.id,
-          idType: typeof p.id,
-          name: p.displayName || p.name
-        })));
       },
       onRemoteStreamClosed: (producerId) => {
         // Handle remote stream closed
-        console.log('🚫 Remote stream closed, producerId:', producerId);
         
         // Find which participant and which stream type (video/audio/screenShare) this producer belongs to
         // and remove it from the remoteStreams map
@@ -328,7 +255,6 @@ export function useSFU(options = {}) {
             // For now, we'll handle screen share closure via the onScreenShareStateChanged callback
             // which is triggered by the backend when a screen share producer is closed
             
-            console.log('🔍 Checking participant:', participantId, 'for closed producer:', producerId);
           }
           
           return newMap;
@@ -339,11 +265,6 @@ export function useSFU(options = {}) {
       },
       onProducerPaused: (data) => {
         // Handle remote producer paused (participant turned off their camera/mic)
-        console.log('🔇 Remote producer paused:', {
-          participantId: data.participantId,
-          producerId: data.producerId,
-          kind: data.kind
-        });
         
         // Update the remote participant state
         setRemoteParticipants(prev => {
@@ -365,11 +286,6 @@ export function useSFU(options = {}) {
       },
       onProducerResumed: (data) => {
         // Handle remote producer resumed (participant turned on their camera/mic)
-        console.log('🔊 Remote producer resumed:', {
-          participantId: data.participantId,
-          producerId: data.producerId,
-          kind: data.kind
-        });
         
         // Update the remote participant state
         setRemoteParticipants(prev => {
@@ -402,36 +318,27 @@ export function useSFU(options = {}) {
     return () => {
       // Don't disconnect here - it causes React Strict Mode issues
       // The client persists via sfuClientRef
-      console.log('useEffect cleanup called (not disconnecting to prevent strict mode issues)');
     };
   }, [authTokens?.access, userData?.id, sfuUrl]); // Run when auth tokens or user data become available
 
   const connect = useCallback(async () => {
     if (!sfuClientRef.current) {
-      console.warn('⚠️ Cannot connect: SFU client not initialized yet');
       return;
     }
     
     // Prevent multiple connection attempts
     if (isConnected || isConnecting) {
-      console.log('Already connected or connecting to SFU', {
-        isConnected,
-        isConnecting,
-        wsState: sfuClientRef.current?.ws?.readyState
-      });
       return;
     }
 
     // Prevent rapid reconnection attempts (but allow after longer delay)
     const now = Date.now();
     if (sfuClientRef.current.lastConnectionAttempt && (now - sfuClientRef.current.lastConnectionAttempt) < 1000) {
-      console.log('Preventing rapid reconnection attempt (wait 1 second)');
       return;
     }
 
     try {
       if (process.env.NODE_ENV === 'development') {
-        console.log('Starting SFU connection...');
       }
       setIsConnecting(true);
       sfuClientRef.current.lastConnectionAttempt = now;
@@ -446,10 +353,8 @@ export function useSFU(options = {}) {
       
       await Promise.race([connectionPromise, timeoutPromise]);
       if (process.env.NODE_ENV === 'development') {
-        console.log('SFU connection successful');
       }
     } catch (error) {
-      console.error('❌ Failed to connect to SFU:', error);
       setIsConnecting(false);
       options.onError?.(error);
       
@@ -487,10 +392,8 @@ export function useSFU(options = {}) {
       if (sfuClientRef.current && token && userId && !isConnected && !isConnecting && !hasAttemptedConnectionRef.current) {
         hasAttemptedConnectionRef.current = true;
         if (process.env.NODE_ENV === 'development') {
-          console.log('Auth tokens and user data available, attempting SFU connection...');
         }
         connect().catch((error) => {
-          console.error('SFU connection failed:', error);
           // Reset flag to allow retry after a delay
           setTimeout(() => {
             hasAttemptedConnectionRef.current = false;
@@ -506,7 +409,6 @@ export function useSFU(options = {}) {
       await stopMedia();
       await sfuClientRef.current.disconnect();
     } catch (error) {
-      console.error('Failed to disconnect from SFU:', error);
     }
   }, []);
 
@@ -522,7 +424,6 @@ export function useSFU(options = {}) {
       setIsInRoom(true);
       return room;
     } catch (error) {
-      console.error('Failed to create room:', error);
       throw error;
     }
   }, []);
@@ -534,14 +435,12 @@ export function useSFU(options = {}) {
 
     // Prevent duplicate join attempts
     if (isInRoom && currentRoom?.id === roomId) {
-      console.log('Already in room:', roomId);
       return currentRoom;
     }
 
     try {
       // Wait for connection if not connected
       if (!sfuClientRef.current.isConnected) {
-        console.log('Waiting for SFU connection before joining room...');
         
         // Wait up to 10 seconds for connection
         const maxWait = 10000;
@@ -555,24 +454,12 @@ export function useSFU(options = {}) {
           throw new Error('Failed to connect to SFU server. Please check that the SFU backend is running.');
         }
         
-        console.log('SFU connection established, proceeding with room join');
       }
 
       const room = await sfuClientRef.current.joinRoom(roomId, displayName, metadata);
-      console.log('🎯 Room joined successfully:', {
-        roomId: room.roomId,
-        totalParticipants: room.participants?.length || 0,
-        allParticipants: room.participants?.map(p => ({
-          id: p.id,
-          userId: p.userId,
-          displayName: p.displayName,
-          producers: p.producers?.length || 0
-        }))
-      });
       
       // Create recv transport early to receive remote streams
       if (!sfuClientRef.current.recvTransport) {
-        console.log('📥 Creating recv transport for receiving remote streams...');
         await sfuClientRef.current.createTransport('recv');
       }
       
@@ -581,37 +468,21 @@ export function useSFU(options = {}) {
       // IMPORTANT: Convert userData.id to string for comparison (Django returns number, SFU returns string)
       const currentUserIdString = String(userData?.id);
       
-      console.log('🔍 Filtering participants:', {
-        currentUserId: userData?.id,
-        currentUserIdString,
-        beforeFilter: room.participants?.length || 0
-      });
       
       const otherParticipants = (room.participants || []).filter(
         p => {
           const matches = p.userId !== currentUserIdString;
-          console.log(`  Participant ${p.displayName} (userId: ${p.userId}): ${matches ? 'KEEP' : 'FILTER OUT'}`);
           return matches;
         }
       );
       
-      console.log('✅ Filtered participants:', {
-        afterFilter: otherParticipants.length,
-        participants: otherParticipants.map(p => ({
-          id: p.id,
-          userId: p.userId,
-          displayName: p.displayName
-        }))
-      });
       
       // SET PARTICIPANTS STATE FIRST before subscribing to avoid race conditions
-      console.log('📝 Setting participants state BEFORE subscribing to producers');
       setCurrentRoom(room);
       setParticipants(otherParticipants);
       setIsInRoom(true);
       
       // Initialize remoteParticipants map with existing participants and their media states
-      console.log('📝 Initializing remoteParticipants map with existing participants');
       setRemoteParticipants(prev => {
         const newMap = new Map(prev);
         otherParticipants.forEach(participant => {
@@ -621,13 +492,6 @@ export function useSFU(options = {}) {
             isAudioEnabled: participant.isAudioEnabled || false,
             isVideoEnabled: participant.isVideoEnabled || false,
           });
-          console.log('  ✅ Initialized participant:', {
-            id: participant.id,
-            displayName: participant.displayName,
-            isAudioEnabled: participant.isAudioEnabled,
-            isVideoEnabled: participant.isVideoEnabled,
-            producerCount: participant.producers?.length || 0
-          });
         });
         return newMap;
       });
@@ -636,66 +500,50 @@ export function useSFU(options = {}) {
       await new Promise(resolve => setTimeout(resolve, 50));
       
       // Subscribe to existing producers from other participants
-      console.log('🔍 Checking for existing producers to subscribe to...');
       for (const participant of otherParticipants) {
         if (participant.producers && participant.producers.length > 0) {
-          console.log(`📡 Found ${participant.producers.length} existing producers from participant:`, participant.displayName);
           for (const producer of participant.producers) {
-            console.log(`  └─ Subscribing to ${producer.kind} producer:`, producer.id);
             // Subscribe to existing producers now that we have recv transport
             if (sfuClientRef.current.handleRemoteProducer) {
               await sfuClientRef.current.handleRemoteProducer(producer.id, participant.id);
             }
           }
         } else {
-          console.log(`ℹ️ Participant ${participant.displayName} has no producers yet`);
         }
       }
       
-      console.log('✅ Room join completed successfully with participants:', {
-        participantsCount: otherParticipants.length,
-        participantNames: otherParticipants.map(p => p.displayName)
-      });
       
       return room;
     } catch (error) {
-      console.error('Failed to join room:', error);
       throw error;
     }
   }, [isInRoom, currentRoom, userData?.id]);
 
   const stopMedia = useCallback(async () => {
     try {
-      console.log('🛑 Stopping all media streams and releasing camera/microphone access...');
       
       // First, unpublish all producers from the server
       if (sfuClientRef.current) {
         if (audioProducerRef.current) {
-          console.log('📡 Unpublishing audio producer...');
           try {
             await sfuClientRef.current.unpublish(audioProducerRef.current.id);
           } catch (err) {
-            console.warn('Error unpublishing audio:', err);
           }
           audioProducerRef.current = null;
         }
 
         if (videoProducerRef.current) {
-          console.log('📡 Unpublishing video producer...');
           try {
             await sfuClientRef.current.unpublish(videoProducerRef.current.id);
           } catch (err) {
-            console.warn('Error unpublishing video:', err);
           }
           videoProducerRef.current = null;
         }
 
         if (screenProducerRef.current) {
-          console.log('📡 Unpublishing screen producer...');
           try {
             await sfuClientRef.current.unpublish(screenProducerRef.current.id);
           } catch (err) {
-            console.warn('Error unpublishing screen:', err);
           }
           screenProducerRef.current = null;
         }
@@ -703,11 +551,9 @@ export function useSFU(options = {}) {
       
       // Stop all local camera/mic tracks and release access
       if (localStreamRef.current) {
-        console.log('🎥 Stopping camera and microphone tracks...');
         const tracks = localStreamRef.current.getTracks();
         tracks.forEach(track => {
           if (track.readyState === 'live') {
-            console.log(`  ⏹️  Stopping ${track.kind} track: ${track.label}`);
             track.stop(); // This releases the camera/mic hardware access
             track.enabled = false;
           }
@@ -720,16 +566,13 @@ export function useSFU(options = {}) {
         
         localStreamRef.current = null;
         setLocalStream(null);
-        console.log('✅ Camera and microphone access released');
       }
 
       // Stop all screen share tracks
       if (screenStreamRef.current) {
-        console.log('🖥️  Stopping screen share tracks...');
         const screenTracks = screenStreamRef.current.getTracks();
         screenTracks.forEach(track => {
           if (track.readyState === 'live') {
-            console.log(`  ⏹️  Stopping screen ${track.kind} track: ${track.label}`);
             track.stop();
             track.enabled = false;
           }
@@ -741,7 +584,6 @@ export function useSFU(options = {}) {
         });
         
         screenStreamRef.current = null;
-        console.log('✅ Screen share stopped');
       }
 
       // Reset all media states
@@ -749,10 +591,8 @@ export function useSFU(options = {}) {
       setIsVideoEnabled(false);
       setIsScreenSharing(false);
 
-      console.log('✅ All media streams stopped and hardware access released successfully');
 
     } catch (error) {
-      console.error('❌ Failed to stop media:', error);
       
       // Even if there's an error, try to force stop all tracks
       try {
@@ -766,24 +606,16 @@ export function useSFU(options = {}) {
           screenStreamRef.current = null;
         }
       } catch (cleanupError) {
-        console.error('Error in cleanup fallback:', cleanupError);
       }
     }
   }, []);
 
   const leaveRoom = useCallback(async () => {
     if (!sfuClientRef.current) {
-      console.log('⚠️ No SFU client available for leaving room');
       return;
     }
 
     try {
-      console.log('🚪 Leaving room and cleaning up...', {
-        isInRoom,
-        hasRoomId: !!sfuClientRef.current.currentRoomId,
-        hasWs: !!sfuClientRef.current.ws,
-        wsState: sfuClientRef.current.ws?.readyState
-      });
       
       // Stop all media (camera, mic, screen share) FIRST
       await stopMedia();
@@ -791,12 +623,9 @@ export function useSFU(options = {}) {
       // Leave the room on the server (sends leaveRoom message)
       if (sfuClientRef.current.currentRoomId) {
         try {
-          console.log('📤 Sending leaveRoom message to server...');
           await sfuClientRef.current.leaveRoom();
-          console.log('✅ leaveRoom message sent successfully');
         } catch (error) {
           // If server communication fails, still continue with local cleanup
-          console.warn('⚠️ Failed to send leaveRoom to server (server may already know):', error.message);
         }
       }
       
@@ -805,7 +634,6 @@ export function useSFU(options = {}) {
         try {
           consumer.close();
         } catch (err) {
-          console.warn('Error closing consumer:', err);
         }
       }
       sfuClientRef.current.consumers.clear();
@@ -815,7 +643,6 @@ export function useSFU(options = {}) {
         try {
           producer.close();
         } catch (err) {
-          console.warn('Error closing producer:', err);
         }
       }
       sfuClientRef.current.producers.clear();
@@ -826,7 +653,6 @@ export function useSFU(options = {}) {
           sfuClientRef.current.transport.close();
           sfuClientRef.current.transport = null;
         } catch (err) {
-          console.warn('Error closing send transport:', err);
         }
       }
       
@@ -835,7 +661,6 @@ export function useSFU(options = {}) {
           sfuClientRef.current.recvTransport.close();
           sfuClientRef.current.recvTransport = null;
         } catch (err) {
-          console.warn('Error closing recv transport:', err);
         }
       }
       
@@ -847,9 +672,7 @@ export function useSFU(options = {}) {
       setScreenSharingParticipants(new Set());
       setIsInRoom(false);
       
-      console.log('✅ Room left and cleaned up successfully');
     } catch (error) {
-      console.error('❌ Error during leaveRoom:', error);
       
       // Force cleanup even if there's an error
       setCurrentRoom(null);
@@ -863,41 +686,22 @@ export function useSFU(options = {}) {
 
   const startMedia = useCallback(async () => {
     if (!sfuClientRef.current) {
-      console.error('Cannot start media: SFU client not initialized');
       return;
     }
 
     // Check if actually in a room by checking the client's roomId (not React state)
     if (!sfuClientRef.current.currentRoomId) {
-      console.error('Cannot start media: Not in a room. Please join a room first.');
-      console.log('Debug - isInRoom state:', isInRoom, 'Client roomId:', sfuClientRef.current.currentRoomId);
-      console.log('Debug - Full client state:', {
-        hasClient: !!sfuClientRef.current,
-        isConnected: sfuClientRef.current?.isConnected,
-        roomId: sfuClientRef.current?.roomId,
-        currentRoomId: sfuClientRef.current?.currentRoomId,
-        participantId: sfuClientRef.current?.participantId,
-        hasTransport: !!sfuClientRef.current?.transport,
-        hasRecvTransport: !!sfuClientRef.current?.recvTransport
-      });
       
       // Wait a moment and retry once in case of race condition
-      console.log('Waiting 500ms and retrying...');
       await new Promise(resolve => setTimeout(resolve, 500));
       
       if (!sfuClientRef.current.currentRoomId) {
-        console.error('Still not in a room after retry. Aborting startMedia.');
         throw new Error('Not in a room. Please join a room first.');
       }
       
-      console.log('Room ID found after retry, continuing with startMedia');
     }
 
     try {
-      console.log('Starting media...', {
-        roomId: sfuClientRef.current.currentRoomId,
-        isConnected: sfuClientRef.current.isConnected
-      });
       
       // Check if getUserMedia is available
       if (typeof window === 'undefined') {
@@ -928,21 +732,11 @@ export function useSFU(options = {}) {
         } else {
           // If not in secure context, allow joining without media
           if (!isSecureContext) {
-            console.warn('⚠️ Not in secure context - media access unavailable. User can join without camera/mic.');
             throw new Error('MEDIA_NOT_AVAILABLE_NON_SECURE');
           }
           
           const errorMsg = 'Camera and microphone access is not available. ' +
             'Please ensure you are using a secure connection (HTTPS or localhost) and a modern browser that supports WebRTC.';
-          console.error(errorMsg, {
-            hasNavigator: true,
-            hasMediaDevices: false,
-            hasGetUserMedia: !!navigator.getUserMedia,
-            isSecureContext,
-            protocol: window.location.protocol,
-            hostname: window.location.hostname,
-            userAgent: navigator.userAgent
-          });
           throw new Error(errorMsg);
         }
       }
@@ -950,26 +744,16 @@ export function useSFU(options = {}) {
       if (!navigator.mediaDevices.getUserMedia) {
         // If not in secure context, allow joining without media
         if (!isSecureContext) {
-          console.warn('⚠️ Not in secure context - getUserMedia unavailable. User can join without camera/mic.');
           throw new Error('MEDIA_NOT_AVAILABLE_NON_SECURE');
         }
         
         const errorMsg = 'getUserMedia is not available. ' +
           'Please ensure you are using a secure connection (HTTPS or localhost) and a modern browser.';
-        console.error(errorMsg, {
-          hasNavigator: true,
-          hasMediaDevices: true,
-          hasGetUserMedia: false,
-          isSecureContext,
-          protocol: window.location.protocol,
-          hostname: window.location.hostname
-        });
         throw new Error(errorMsg);
       }
       
       // Stop existing stream if any
       if (localStreamRef.current) {
-        console.log('Stopping existing stream...');
         localStreamRef.current.getTracks().forEach(track => track.stop());
       }
 
@@ -977,13 +761,6 @@ export function useSFU(options = {}) {
       if (!navigator.mediaDevices || typeof navigator.mediaDevices.getUserMedia !== 'function') {
         const errorMsg = 'getUserMedia is not available. ' +
           'Please ensure you are using a secure connection (HTTPS or localhost) and a modern browser that supports WebRTC.';
-        console.error('getUserMedia check failed:', {
-          hasMediaDevices: !!navigator.mediaDevices,
-          getUserMediaType: typeof navigator.mediaDevices?.getUserMedia,
-          isSecureContext: window.isSecureContext,
-          protocol: window.location.protocol,
-          userAgent: navigator.userAgent
-        });
         throw new Error(errorMsg);
       }
 
@@ -1001,10 +778,6 @@ export function useSFU(options = {}) {
         }
       });
 
-      console.log('Got user media:', {
-        audioTracks: stream.getAudioTracks().length,
-        videoTracks: stream.getVideoTracks().length
-      });
 
       localStreamRef.current = stream;
       setLocalStream(stream);
@@ -1018,42 +791,33 @@ export function useSFU(options = {}) {
 
       // Only create transports and producers if we have a proper SFU connection
       if (sfuClientRef.current.isConnected && sfuClientRef.current.device) {
-        console.log('Creating transports and producers...');
         
         // Create send transport if not exists
         if (!sfuClientRef.current.transport) {
-          console.log('Creating send transport...');
           await sfuClientRef.current.createTransport('send');
         }
 
         // Create recv transport for consuming remote streams (if not already created)
         if (!sfuClientRef.current.recvTransport) {
-          console.log('Creating recv transport...');
           await sfuClientRef.current.createTransport('recv');
         } else {
-          console.log('Recv transport already exists, skipping creation');
         }
 
         // Publish audio and video if tracks exist
         if (audioTrack && !audioProducerRef.current) {
-          console.log('Publishing audio...');
           const audioProducer = await sfuClientRef.current.publishAudio(stream);
           audioProducerRef.current = audioProducer;
         }
 
         if (videoTrack && !videoProducerRef.current) {
-          console.log('Publishing video...');
           const videoProducer = await sfuClientRef.current.publishVideo(stream);
           videoProducerRef.current = videoProducer;
         }
 
-        console.log('Media started successfully');
       } else {
-        console.warn('SFU not fully initialized, media tracks obtained but not published');
       }
 
     } catch (error) {
-      console.error('Failed to start media:', error);
       options.onError?.(error);
     }
   }, [isInRoom, options]);
@@ -1070,18 +834,15 @@ export function useSFU(options = {}) {
       if (audioProducerRef.current && sfuClientRef.current) {
         try {
           if (audioTrack.enabled) {
-            console.log('Resuming audio producer');
             await audioProducerRef.current.resume();
             // Notify the server to broadcast state change to other participants
             await sfuClientRef.current.resumeProducer(audioProducerRef.current.id);
           } else {
-            console.log('Pausing audio producer');
             await audioProducerRef.current.pause();
             // Notify the server to broadcast state change to other participants
             await sfuClientRef.current.pauseProducer(audioProducerRef.current.id);
           }
         } catch (error) {
-          console.error('Failed to toggle audio producer state:', error);
         }
       }
     }
@@ -1099,18 +860,15 @@ export function useSFU(options = {}) {
       if (videoProducerRef.current && sfuClientRef.current) {
         try {
           if (videoTrack.enabled) {
-            console.log('Resuming video producer');
             await videoProducerRef.current.resume();
             // Notify the server to broadcast state change to other participants
             await sfuClientRef.current.resumeProducer(videoProducerRef.current.id);
           } else {
-            console.log('Pausing video producer');
             await videoProducerRef.current.pause();
             // Notify the server to broadcast state change to other participants
             await sfuClientRef.current.pauseProducer(videoProducerRef.current.id);
           }
         } catch (error) {
-          console.error('Failed to toggle video producer state:', error);
         }
       }
     }
@@ -1122,12 +880,10 @@ export function useSFU(options = {}) {
     try {
       if (isScreenSharing) {
         // Stop screen sharing
-        console.log('Stopping screen share...');
         
         // Stop the screen stream tracks
         if (screenStreamRef.current) {
           screenStreamRef.current.getTracks().forEach(track => {
-            console.log(`Stopping screen share track: ${track.kind}`);
             track.stop();
           });
           screenStreamRef.current = null;
@@ -1141,7 +897,6 @@ export function useSFU(options = {}) {
         
         // Restore camera stream to local display
         if (localStreamRef.current) {
-          console.log('Restoring camera stream to local display');
           setLocalStream(localStreamRef.current);
         }
         
@@ -1154,16 +909,13 @@ export function useSFU(options = {}) {
         });
         
         setIsScreenSharing(false);
-        console.log('Screen share stopped');
       } else {
         // Start screen sharing
-        console.log('Starting screen share...');
         
         // Check if getDisplayMedia is available
         if (typeof navigator === 'undefined' || !navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {
           const errorMsg = 'Screen sharing is not available. ' +
             'Please ensure you are using a secure connection (HTTPS or localhost) and a modern browser.';
-          console.error(errorMsg);
           throw new Error(errorMsg);
         }
         
@@ -1179,7 +931,6 @@ export function useSFU(options = {}) {
         screenProducerRef.current = screenProducer;
         
         // Update local stream to show screen share to the local user
-        console.log('Updating local display to show screen share');
         setLocalStream(screenStream);
         
         // Add local user to screen sharing participants
@@ -1192,11 +943,9 @@ export function useSFU(options = {}) {
         
         setIsScreenSharing(true);
 
-        console.log('Screen share started');
 
         // Handle screen share end (user clicks browser's stop sharing button)
         screenStream.getVideoTracks()[0].onended = () => {
-          console.log('Screen share ended by user');
           
           // Stop all screen stream tracks
           if (screenStreamRef.current) {
@@ -1212,7 +961,6 @@ export function useSFU(options = {}) {
           
           // Restore camera stream to local display
           if (localStreamRef.current) {
-            console.log('Restoring camera stream to local display after browser stop');
             setLocalStream(localStreamRef.current);
           }
           
@@ -1231,13 +979,11 @@ export function useSFU(options = {}) {
       // Check if the error is due to user cancelling the screen share permission
       // NotAllowedError is thrown when the user denies permission or cancels the dialog
       if (error.name === 'NotAllowedError' || error.message?.includes('Permission denied')) {
-        console.log('Screen share cancelled by user');
         // Don't show error to user - cancelling is a normal action
         return;
       }
       
       // For other errors, log and notify
-      console.error('Failed to toggle screen share:', error);
       options.onError?.(error);
     }
   }, [isInRoom, isScreenSharing, options]);
@@ -1253,13 +999,11 @@ export function useSFU(options = {}) {
   // Cleanup effect: Stop all media when component unmounts
   useEffect(() => {
     return () => {
-      console.log('🧹 Component unmounting - cleaning up media streams...');
       
       // Stop all local camera/mic tracks
       if (localStreamRef.current) {
         localStreamRef.current.getTracks().forEach(track => {
           if (track.readyState === 'live') {
-            console.log(`  🛑 Stopping ${track.kind} track on unmount`);
             track.stop();
           }
         });
@@ -1270,14 +1014,12 @@ export function useSFU(options = {}) {
       if (screenStreamRef.current) {
         screenStreamRef.current.getTracks().forEach(track => {
           if (track.readyState === 'live') {
-            console.log(`  🛑 Stopping screen ${track.kind} track on unmount`);
             track.stop();
           }
         });
         screenStreamRef.current = null;
       }
       
-      console.log('✅ Media cleanup on unmount complete');
     };
   }, []); // Empty deps - only run on mount/unmount
 

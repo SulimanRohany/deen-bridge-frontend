@@ -43,11 +43,6 @@ export default function ImprovedQuranReader({
   
   // Debug: Log userData state
   useEffect(() => {
-    console.log('🔑 Auth State:', {
-      isAuthenticated: !!userData,
-      userData: userData,
-      userDataType: typeof userData
-    })
   }, [userData])
   
   const [surahData, setSurahData] = useState(null)
@@ -111,14 +106,12 @@ export default function ImprovedQuranReader({
 
     scrollTimeoutRef.current = setTimeout(() => {
       if (!versesContainerRef.current) {
-        console.log('⚠️ Verses container not ready')
         return
       }
 
       const verseElement = versesContainerRef.current.querySelector(`[data-verse="${verseNumber}"]`)
       
       if (verseElement) {
-        console.log(`🎯 Scrolling to ayah ${verseNumber} (${reason})`)
         
         // Get the verse element's position relative to the viewport
         const verseRect = verseElement.getBoundingClientRect()
@@ -133,7 +126,6 @@ export default function ImprovedQuranReader({
           behavior: behavior
         })
       } else {
-        console.log(`⚠️ Verse ${verseNumber} not found in DOM`)
       }
     }, delay)
   }, [])
@@ -250,7 +242,6 @@ export default function ImprovedQuranReader({
         await fetchVerses(1)
         
       } catch (error) {
-        console.error('Error fetching surah data:', error)
         setLoading(false)
         
         // Check if it's a network error
@@ -283,14 +274,6 @@ export default function ImprovedQuranReader({
       const data = response.data
       
       // Debug logging
-      console.log('📡 API Response:', {
-        authenticated: data.is_authenticated,
-        restricted: data.access_restricted,
-        totalCount: data.count,
-        resultsCount: data.results?.length,
-        hasNext: !!data.next,
-        message: data.message
-      })
       
       const transformedVerses = data.results.map(v => ({
         number: v.verse_number,
@@ -299,8 +282,6 @@ export default function ImprovedQuranReader({
         audio_url: v.audio_url
       }))
       
-      console.log('📝 Transformed verses:', transformedVerses.length, 'verses')
-      console.log('📋 Verse numbers:', transformedVerses.map(v => v.number))
       
       setTotalVerses(data.count)
       setHasNextPage(!!data.next)
@@ -332,7 +313,6 @@ export default function ImprovedQuranReader({
       setCurrentPage(page)
       
     } catch (error) {
-      console.error('Error fetching verses:', error)
       setLoading(false)
       setLoadingMore(false)
       
@@ -384,7 +364,6 @@ export default function ImprovedQuranReader({
       
       // Load next page when 80% scrolled (only loads ONE page at a time)
       if (scrollPercentage > 80) {
-        console.log('📄 Loading next page...', currentPage + 1)
         fetchVerses(currentPage + 1)
       }
     }
@@ -412,10 +391,8 @@ export default function ImprovedQuranReader({
       
       if (shouldScroll) {
         if (verseChanged) {
-          console.log('🎵 Verse changed from', previousVerse.current, 'to', currentVerse)
         }
         if (playTriggered) {
-          console.log('▶️ Play triggered on verse', currentVerse)
         }
         
         // Check if verse exists in current filtered verses
@@ -429,7 +406,6 @@ export default function ImprovedQuranReader({
           })
         } else if (hasNextPage && !loadingMore && currentVerse > filteredVerses.length) {
           // Verse not loaded yet - load more pages
-          console.log('📄 Auto-loading more verses to reach ayah:', currentVerse)
           fetchVerses(currentPage + 1)
         }
         
@@ -450,7 +426,6 @@ export default function ImprovedQuranReader({
     hasScrolledToInitialVerse.current = false
     previousVerse.current = null
     wasPlaying.current = false
-    console.log('🔄 Surah changed to:', selectedSurah, '- Resetting scroll tracking')
   }, [selectedSurah])
 
   // Additional effect: Scroll when verses finish loading (for bookmarks/initial load)
@@ -460,7 +435,6 @@ export default function ImprovedQuranReader({
       const targetVerseExists = filteredVerses.some(v => v.number === currentVerse)
       
       if (targetVerseExists && !hasScrolledToInitialVerse.current) {
-        console.log('✅ Initial verses loaded, scrolling to ayah:', currentVerse)
         hasScrolledToInitialVerse.current = true
         
         // Use centralized scroll with longer delay for initial load
@@ -872,7 +846,6 @@ export default function ImprovedQuranReader({
             ) : (
               // Unauthenticated: Show first 5 verses + 1 blurred locked verse
               <>
-                {console.log('🔒 Unauthenticated view - Total verses:', filteredVerses.length, 'First 5:', filteredVerses.slice(0, MAX_FREE_VERSES).length, 'Locked 1:', filteredVerses.slice(MAX_FREE_VERSES, MAX_FREE_VERSES + LOCKED_PREVIEW_COUNT).length)}
                 
                 {/* First 5 verses - normal display */}
                 {filteredVerses.slice(0, MAX_FREE_VERSES).map((verse, index) => (
@@ -889,7 +862,6 @@ export default function ImprovedQuranReader({
                 
                 {/* Next 1 verse (6) - blurred with overlay */}
                 {filteredVerses.slice(MAX_FREE_VERSES, MAX_FREE_VERSES + LOCKED_PREVIEW_COUNT).map((verse, index) => {
-                  console.log('🔐 Rendering locked verse:', verse.number)
                   return (
                     <div 
                       key={verse.number}

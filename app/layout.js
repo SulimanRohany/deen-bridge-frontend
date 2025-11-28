@@ -17,30 +17,27 @@ const geistMono = Geist_Mono({
   preload: true,
 });
 
-// Generate default metadata (homepage metadata)
-// This applies to the homepage and serves as fallback for other pages
+// Generate default metadata
 export const metadata = generateSEOMetadata({
-  title: "Deen Bridge - Online Islamic Education Platform | Learn Quran Online",
-  description: "Join thousands of students learning Quran and Islamic studies online. Expert teachers, comprehensive courses, flexible schedules. Start your Islamic education journey today with Deen Bridge.",
+  title: "Deen Bridge - Online Islamic Education Platform",
+  description: "Empowering Muslims worldwide with quality Islamic education. Learn Quran and Islamic studies from expert teachers online. Join thousands of students in our comprehensive courses.",
   keywords: [
-    "online Quran classes",
-    "Islamic education online",
-    "learn Quran",
-    "Quran courses",
+    "Islamic education",
+    "Quran learning",
+    "Online Quran classes",
     "Islamic studies",
-    "Quran teacher online",
-    "Tajweed course",
-    "Quran memorization",
+    "Quran courses",
+    "Learn Arabic",
     "Islamic knowledge",
-    "Muslim education platform",
-    "Deen Bridge",
-    "Quran learning app",
-    "online Islamic school",
-    "Quran recitation",
-    "Islamic scholarship"
+    "Muslim education",
+    "Quran teacher",
+    "Islamic online courses",
+    "Tajweed",
+    "Quran memorization",
+    "Islamic scholarship",
+    "Deen Bridge"
   ],
   type: "website",
-  canonical: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://www.deenbridge.com'}/`,
 });
 
 export default function RootLayout({ children }) {

@@ -29,7 +29,6 @@ export function useChat(sessionId, options = {}) {
   // WebSocket URL - connect to Django Channels backend
   const getWebSocketUrl = useCallback(() => {
     if (!sessionId) {
-      console.warn('⚠️ No session ID provided for chat WebSocket');
       return null;
     }
     
@@ -52,12 +51,10 @@ export function useChat(sessionId, options = {}) {
     const token = authTokens?.access || '';
     
     if (!token) {
-      console.warn('⚠️ No auth token available for chat WebSocket');
     }
     
     // Include token in URL for authentication
     const finalWsUrl = `${wsUrl}?token=${token}`;
-    console.log('🔗 Chat WebSocket URL:', finalWsUrl.replace(token, 'TOKEN_HIDDEN'));
     
     return finalWsUrl;
   }, [sessionId, authTokens]);
@@ -67,12 +64,10 @@ export function useChat(sessionId, options = {}) {
    */
   const connect = useCallback(() => {
     if (!sessionId || !authTokens?.access) {
-      console.log('⏳ Waiting for session ID and auth tokens...');
       return;
     }
     
     if (wsRef.current?.readyState === WebSocket.OPEN || isConnecting) {
-      console.log('Already connected or connecting to chat');
       return;
     }
     
@@ -81,13 +76,11 @@ export function useChat(sessionId, options = {}) {
       setError(null);
       
       const wsUrl = getWebSocketUrl();
-      console.log('🔌 Connecting to chat WebSocket:', wsUrl);
       
       const ws = new WebSocket(wsUrl);
       wsRef.current = ws;
       
       ws.onopen = () => {
-        console.log('✅ Chat WebSocket connected');
         setIsConnected(true);
         setIsConnecting(false);
         setError(null);
@@ -105,22 +98,13 @@ export function useChat(sessionId, options = {}) {
       ws.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
-          console.log('📩 Chat message received:', data.type);
           
           switch (data.type) {
             case 'connection_established':
-              console.log('Chat connection established:', data);
               break;
             
             case 'chat_message':
               // New chat message
-              console.log('📨 Full message data:', {
-                hasMessage: !!data.message,
-                messageId: data.message?.id,
-                messageSender: data.message?.sender_name,
-                hasUnreadCount: data.unread_count !== undefined,
-                unreadCount: data.unread_count
-              });
               
               setMessages((prev) => {
                 // Check if message already exists to avoid duplicates
@@ -132,9 +116,7 @@ export function useChat(sessionId, options = {}) {
               // Update unread count if provided (for messages from other users)
               if (data.unread_count !== undefined) {
                 setUnreadCount(data.unread_count);
-                console.log('🔔 Unread count updated:', data.unread_count);
               } else {
-                console.warn('⚠️ No unread_count in message data!');
               }
               
               options.onMessage?.(data.message);
@@ -142,7 +124,6 @@ export function useChat(sessionId, options = {}) {
             
             case 'chat_history':
               // Chat history received
-              console.log('📜 Chat history received:', data.messages.length, 'messages');
               setMessages(data.messages);
               if (data.unread_count !== undefined) {
                 setUnreadCount(data.unread_count);
@@ -150,12 +131,10 @@ export function useChat(sessionId, options = {}) {
               break;
             
             case 'user_joined':
-              console.log('👋 User joined:', data.user_name);
               options.onUserJoined?.(data);
               break;
             
             case 'user_left':
-              console.log('👋 User left:', data.user_name);
               options.onUserLeft?.(data);
               break;
             
@@ -174,7 +153,6 @@ export function useChat(sessionId, options = {}) {
             
             case 'messages_marked_read':
               // Messages were marked as read
-              console.log('✅ Marked messages as read:', data.marked_count);
               // Use the actual unread count from backend (in case new messages arrived)
               if (data.unread_count !== undefined) {
                 setUnreadCount(data.unread_count);
@@ -184,16 +162,13 @@ export function useChat(sessionId, options = {}) {
               break;
             
             case 'error':
-              console.error('❌ Chat error:', data.message);
               setError(data.message);
               options.onError?.(data.message);
               break;
             
             default:
-              console.log('Unknown message type:', data.type);
           }
         } catch (err) {
-          console.error('Error parsing chat message:', err);
         }
       };
       
@@ -206,7 +181,6 @@ export function useChat(sessionId, options = {}) {
         };
         
         if (process.env.NODE_ENV === 'development') {
-          console.error('Chat WebSocket error event:', errorInfo);
         }
         
         // Only set error if we're not already connected (to avoid overwriting successful connections)
@@ -218,21 +192,11 @@ export function useChat(sessionId, options = {}) {
       };
       
       ws.onclose = (event) => {
-        console.log('🔌 Chat WebSocket closed:', {
-          code: event.code,
-          reason: event.reason,
-          wasClean: event.wasClean,
-        });
         
         // Log specific close codes for debugging (always log errors)
         if (event.code === 1006) {
           const errorMsg = 'WebSocket connection failed. The Django server must be running with an ASGI server (daphne or uvicorn) to support WebSockets. Regular runserver does not support WebSockets.';
-          console.error('WebSocket closed abnormally (1006):', errorMsg);
           if (process.env.NODE_ENV === 'development') {
-            console.error('  - Backend server not running with ASGI server');
-            console.error('  - Network connection issues');
-            console.error('  - CORS or authentication problems');
-            console.error('  - Run: daphne -b 0.0.0.0 -p 8000 backend.asgi:application');
           }
           if (!isConnected) {
             setError(errorMsg);
@@ -240,12 +204,10 @@ export function useChat(sessionId, options = {}) {
           }
         } else if (event.code === 4001) {
           const errorMsg = 'WebSocket authentication failed. Please log in again.';
-          console.error('WebSocket closed: Unauthorized (4001)');
           setError(errorMsg);
           options.onError?.(errorMsg);
         } else if (event.code === 4002) {
           const errorMsg = 'WebSocket connection error occurred.';
-          console.error('WebSocket closed: Connection error (4002)');
           if (!isConnected) {
             setError(errorMsg);
             options.onError?.(errorMsg);
@@ -259,7 +221,6 @@ export function useChat(sessionId, options = {}) {
         // Attempt to reconnect if not a normal closure
         if (event.code !== 1000 && reconnectAttemptsRef.current < maxReconnectAttempts) {
           const delay = Math.min(1000 * Math.pow(2, reconnectAttemptsRef.current), 10000);
-          console.log(`🔄 Reconnecting in ${delay}ms... (attempt ${reconnectAttemptsRef.current + 1}/${maxReconnectAttempts})`);
           
           reconnectTimeoutRef.current = setTimeout(() => {
             reconnectAttemptsRef.current++;
@@ -274,7 +235,6 @@ export function useChat(sessionId, options = {}) {
       };
       
     } catch (err) {
-      console.error('Error creating chat WebSocket:', err);
       setError('Failed to create connection');
       setIsConnecting(false);
       options.onError?.('Failed to create connection');
@@ -291,7 +251,6 @@ export function useChat(sessionId, options = {}) {
     }
     
     if (wsRef.current) {
-      console.log('Disconnecting from chat WebSocket');
       wsRef.current.close(1000, 'User disconnected');
       wsRef.current = null;
     }
@@ -305,13 +264,11 @@ export function useChat(sessionId, options = {}) {
    */
   const sendMessage = useCallback((message) => {
     if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
-      console.error('WebSocket is not connected');
       setError('Not connected to chat');
       return false;
     }
     
     if (!message.trim()) {
-      console.error('Cannot send empty message');
       return false;
     }
     
@@ -323,7 +280,6 @@ export function useChat(sessionId, options = {}) {
       
       return true;
     } catch (err) {
-      console.error('Error sending message:', err);
       setError('Failed to send message');
       return false;
     }
@@ -343,7 +299,6 @@ export function useChat(sessionId, options = {}) {
         is_typing: isTyping,
       }));
     } catch (err) {
-      console.error('Error sending typing indicator:', err);
     }
   }, []);
   
@@ -387,7 +342,6 @@ export function useChat(sessionId, options = {}) {
    */
   const markMessagesRead = useCallback(() => {
     if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
-      console.error('WebSocket is not connected');
       return false;
     }
     
@@ -401,7 +355,6 @@ export function useChat(sessionId, options = {}) {
       
       return true;
     } catch (err) {
-      console.error('Error marking messages as read:', err);
       return false;
     }
   }, []);
@@ -431,7 +384,6 @@ export function useChat(sessionId, options = {}) {
         return data.unread_count;
       }
     } catch (err) {
-      console.error('Error fetching unread count:', err);
     }
     
     return 0;

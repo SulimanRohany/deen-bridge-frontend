@@ -73,7 +73,6 @@ export default function CreateBlogPostPage() {
       const parsedTokens = JSON.parse(authTokens);
       return parsedTokens.access;
     } catch (error) {
-      console.error('Error parsing authTokens:', error);
       toast.error('Invalid authentication data. Please login again.');
       router.push('/login');
       return null;
@@ -137,11 +136,9 @@ export default function CreateBlogPostPage() {
         toast.success('Blog post created successfully!')
         router.push('/dashboard/super-admin/blog')
       } else {
-        console.error('Failed to create post')
         toast.error('Failed to create post. Please try again.')
       }
     } catch (error) {
-      console.error('Error creating post:', error)
       
       // Provide helpful error messages
       if (error.response?.status === 413 || error.code === 'ERR_NETWORK') {

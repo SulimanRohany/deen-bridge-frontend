@@ -111,7 +111,6 @@ export default function TeacherAttendancePage() {
       const parsedTokens = JSON.parse(authTokens);
       return parsedTokens.access;
     } catch (error) {
-      console.error('Error parsing authTokens:', error);
       toast.error('Invalid authentication data. Please login again.');
       router.push('/login');
       return null;
@@ -203,14 +202,7 @@ export default function TeacherAttendancePage() {
       const uniqueStudents = Array.from(uniqueStudentsMap.values());
       setAllStudents(uniqueStudents);
       
-      console.log('Loaded data:', {
-        students: uniqueStudents.length,
-        classes: (classesRes.data.results || classesRes.data).length,
-        sessions: (sessionsRes.data.results || sessionsRes.data).length,
-        attendances: (attendancesRes.data.results || attendancesRes.data).length
-      });
     } catch (error) {
-      console.error('Error fetching data:', error);
       handleApiError(error, 'Failed to fetch data');
     } finally {
       setLoading(false);
@@ -309,7 +301,6 @@ export default function TeacherAttendancePage() {
       const response = await api.get(`course/session/${sessionId}/students/`);
       setStudents(response.data.students || []);
     } catch (error) {
-      console.error('Error fetching students:', error);
       toast.error('Failed to load students for this session');
       setStudents([]);
     } finally {
@@ -319,7 +310,6 @@ export default function TeacherAttendancePage() {
 
   // Handle API errors
   const handleApiError = (error, defaultMessage) => {
-    console.error('API Error:', error);
     if (error.response) {
       if (error.response.status === 401) {
         toast.error('Session expired. Please login again.');

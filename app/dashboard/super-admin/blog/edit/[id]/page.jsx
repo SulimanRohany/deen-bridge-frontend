@@ -88,7 +88,6 @@ export default function EditBlogPostPage({ params }) {
       const parsedTokens = JSON.parse(authTokens);
       return parsedTokens.access;
     } catch (error) {
-      console.error('Error parsing authTokens:', error);
       toast.error('Invalid authentication data. Please login again.');
       router.push('/login');
       return null;
@@ -125,7 +124,6 @@ export default function EditBlogPostPage({ params }) {
         setImagePreview(postData.featured_image)
       }
     } catch (error) {
-      console.error('Error fetching post:', error)
     } finally {
       setLoading(false)
     }
@@ -176,10 +174,8 @@ export default function EditBlogPostPage({ params }) {
       if (response.status === 200 || response.status === 201) {
         router.push('/dashboard/super-admin/blog')
       } else {
-        console.error('Failed to update post')
       }
     } catch (error) {
-      console.error('Error updating post:', error)
     } finally {
       setLoading(false)
     }
@@ -198,10 +194,8 @@ export default function EditBlogPostPage({ params }) {
       if (response.status === 200 || response.status === 204) {
         router.push('/dashboard/super-admin/blog')
       } else {
-        console.error('Failed to delete post')
       }
     } catch (error) {
-      console.error('Error deleting post:', error)
     } finally {
       setDeleting(false)
     }

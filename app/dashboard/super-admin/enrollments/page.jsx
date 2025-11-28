@@ -123,7 +123,6 @@ export default function EnrollmentsPage() {
       const parsedTokens = JSON.parse(authTokens);
       return parsedTokens.access;
     } catch (error) {
-      console.error('Error parsing authTokens:', error);
       toast.error('Invalid authentication data. Please login again.');
       router.push('/login');
       return null;
@@ -267,7 +266,6 @@ export default function EnrollmentsPage() {
 
   // Handle API errors
   const handleApiError = (error, defaultMessage) => {
-    console.error('API Error:', error);
     if (error.response) {
       if (error.response.status === 401) {
         toast.error('Session expired. Please login again.');

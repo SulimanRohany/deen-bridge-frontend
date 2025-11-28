@@ -64,7 +64,6 @@ export default function CommentSection({ postId, comments: initialComments = [] 
       const response = await blogAPI.getComments(postId)
       setComments(response.data)
     } catch (error) {
-      console.error('Error fetching comments:', error)
       toast.error('Failed to load comments')
     } finally {
       setLoading(false)
@@ -104,7 +103,6 @@ export default function CommentSection({ postId, comments: initialComments = [] 
       setActiveComment(null)
       toast.success('Comment posted successfully!')
     } catch (error) {
-      console.error('Error submitting comment:', error)
       if (error.response?.status === 401) {
         toast.error('Please log in to post a comment')
       } else {
@@ -147,7 +145,6 @@ export default function CommentSection({ postId, comments: initialComments = [] 
       setActiveComment(null)
       toast.success('Comment updated successfully!')
     } catch (error) {
-      console.error('Error updating comment:', error)
       toast.error('Failed to update comment. Please try again.')
     } finally {
       setLoading(false)
@@ -175,7 +172,6 @@ export default function CommentSection({ postId, comments: initialComments = [] 
       setComments(prev => removeCommentFromTree(prev, commentId))
       toast.success('Comment deleted successfully!')
     } catch (error) {
-      console.error('Error deleting comment:', error)
       toast.error('Failed to delete comment. Please try again.')
     } finally {
       setLoading(false)

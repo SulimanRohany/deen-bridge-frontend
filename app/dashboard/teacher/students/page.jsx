@@ -104,7 +104,6 @@ export default function TeacherStudentsPage() {
         setTotalPages(1);
       }
     } catch (err) {
-      console.error('Error fetching data:', err);
       setError(err.response?.data?.error || err.message || 'Failed to load students');
       toast.error('Failed to load students');
     } finally {

@@ -26,7 +26,6 @@ export const AuthProvider = ({ children }) => {
       // Check if we have auth tokens before making the request
       const tokens = localStorage.getItem('authTokens');
       if (!tokens) {
-        console.log('No auth tokens available, skipping profile enrichment');
         return baseUserData;
       }
 
@@ -44,9 +43,7 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       // Silently handle 403/404 errors - profile enrichment is optional
       if (error.response?.status === 403 || error.response?.status === 404) {
-        console.log('Profile data not accessible or not found, using base user data');
       } else {
-        console.error('Error fetching user profile:', error);
       }
       return baseUserData; // Return base data if profile fetch fails
     }
@@ -83,7 +80,6 @@ export const AuthProvider = ({ children }) => {
           }
         }
       } catch (error) {
-        console.error('Authentication initialization error:', error);
         localStorage.removeItem('authTokens');
         setAuthTokens(null);
         setUserData(null);
@@ -121,7 +117,6 @@ export const AuthProvider = ({ children }) => {
         // Check for pending actions and execute them
         const pendingAction = getPendingAction();
         if (pendingAction) {
-          console.log('🎯 Resuming pending action after login:', pendingAction);
           clearPendingAction();
           
           // Navigate to the appropriate page based on action type
@@ -148,7 +143,6 @@ export const AuthProvider = ({ children }) => {
         }
       }
     } catch (error) {
-      console.error('Login failed:', error);
       setMessage(extractErrorMessage(error));
     }
   };
@@ -176,7 +170,6 @@ export const AuthProvider = ({ children }) => {
         router.push('/login');
       }
     } catch (error) {
-      console.error('Registration failed:', error);
       setMessage(extractErrorMessage(error));
     }
   };
@@ -217,7 +210,6 @@ export const AuthProvider = ({ children }) => {
         return false;
       }
     } catch (error) {
-      console.error('Token refresh failed:', error);
       setIsRefreshing(false);
       
       // Only show message and logout if we're not in initialization

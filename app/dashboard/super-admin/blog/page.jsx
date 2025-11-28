@@ -84,7 +84,6 @@ export default function AdminBlogPage() {
       const parsedTokens = JSON.parse(authTokens);
       return parsedTokens.access;
     } catch (error) {
-      console.error('Error parsing authTokens:', error);
       toast.error('Invalid authentication data. Please login again.');
       router.push('/login');
       return null;
@@ -121,7 +120,6 @@ export default function AdminBlogPage() {
         setTotalPages(1)
       }
     } catch (error) {
-      console.error('Error fetching posts:', error)
       toast.error('Failed to fetch posts')
     } finally {
       setLoading(false)
@@ -193,7 +191,6 @@ export default function AdminBlogPage() {
       
       fetchPosts()
     } catch (error) {
-      console.error('Error deleting post:', error)
       toast.error('Failed to delete post')
     }
   }
@@ -210,7 +207,6 @@ export default function AdminBlogPage() {
       })
       fetchPosts() // Refresh the list
     } catch (error) {
-      console.error('Error updating post status:', error)
     }
   }
 

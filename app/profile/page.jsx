@@ -142,11 +142,9 @@ export default function ProfilePage() {
             activeCourses: enrollments.length - certificates.length,
           })
         } catch (err) {
-          console.error('Error fetching stats:', err)
         }
       }
     } catch (error) {
-      console.error('Error fetching profile:', error)
       toast.error('Failed to load profile data')
     } finally {
       setLoading(false)
@@ -262,7 +260,6 @@ export default function ProfilePage() {
       // Refresh profile data
       await fetchProfileData()
     } catch (error) {
-      console.error('Error saving profile:', error)
       toast.error(error.response?.data?.message || 'Failed to update profile')
     } finally {
       setSaving(false)

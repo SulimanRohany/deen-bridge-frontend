@@ -66,7 +66,6 @@ export default function VideoConference() {
   } = useSFU({
     autoConnect: false,
     onError: (error) => {
-      console.error('SFU Error:', error);
       setError(error.message);
     }
   })
@@ -86,10 +85,8 @@ export default function VideoConference() {
       if (authTokens?.access && userData?.id) {
         hasConnectedRef.current = true;
         if (process.env.NODE_ENV === 'development') {
-          console.log('Connecting to SFU...');
         }
         connect().catch((error) => {
-          console.error('SFU connection failed:', error);
           hasConnectedRef.current = false; // Allow retry
         });
       }
@@ -124,7 +121,6 @@ export default function VideoConference() {
       // Use refs to get latest values
       if (isInRoomRef.current || isInCallRef.current) {
         if (process.env.NODE_ENV === 'development') {
-          console.log('Page is unloading, cleaning up session...');
         }
         
         // Use synchronous cleanup for beforeunload
@@ -145,7 +141,6 @@ export default function VideoConference() {
           if (leaveRoomRef.current) leaveRoomRef.current();
           if (sessionTrackingRef.current?.endSession) sessionTrackingRef.current.endSession();
         } catch (err) {
-          console.error('Error in beforeunload cleanup:', err);
         }
       }
     };
@@ -156,7 +151,6 @@ export default function VideoConference() {
     // Cleanup function for component unmount (navigation within app)
     return () => {
       if (process.env.NODE_ENV === 'development') {
-        console.log('Session page unmounting - cleaning up...');
       }
       window.removeEventListener('beforeunload', handleBeforeUnload);
       
@@ -168,7 +162,6 @@ export default function VideoConference() {
       // If we're in a call/room when unmounting, clean up
       if (isInRoomRef.current || isInCallRef.current) {
         if (process.env.NODE_ENV === 'development') {
-          console.log('User navigating away from session, leaving room...');
         }
         
         // Call async cleanup but don't wait
@@ -177,7 +170,6 @@ export default function VideoConference() {
             if (leaveRoomRef.current) await leaveRoomRef.current();
             if (sessionTrackingRef.current?.endSession) sessionTrackingRef.current.endSession();
           } catch (err) {
-            console.error('Error during unmount cleanup:', err);
           }
         })();
       }
@@ -203,7 +195,6 @@ export default function VideoConference() {
     const joinSession = async () => {
       try {
         if (process.env.NODE_ENV === 'development') {
-          console.log('Attempting to join session:', { sessionId, userId: userData?.id });
         }
         
         // Check if user is authenticated
@@ -238,7 +229,6 @@ export default function VideoConference() {
         
         const sessionData = await response.json()
         if (process.env.NODE_ENV === 'development') {
-          console.log('Session join response:', sessionData);
         }
         
         // Extract room ID and user role from the session data
@@ -272,7 +262,6 @@ export default function VideoConference() {
             await startMediaRef.current();
           } catch (mediaError) {
             if (process.env.NODE_ENV === 'development') {
-              console.error('Failed to start media:', mediaError);
             }
             
             // Handle non-secure context gracefully
@@ -299,13 +288,6 @@ export default function VideoConference() {
         
         setIsInCall(true)
       } catch (error) {
-        console.error("Failed to join session:", {
-          message: error.message,
-          originalError: error.originalError,
-          response: error.response,
-          status: error.status || error.response?.status,
-          stack: error.stack
-        })
         
         // Provide more specific error messages
         let errorMessage = "Failed to join session. Please try again."
@@ -352,7 +334,6 @@ export default function VideoConference() {
   const handleLeaveCall = async () => {
     try {
       if (process.env.NODE_ENV === 'development') {
-        console.log('User is leaving the call...');
       }
       
       // Set leaving flag to prevent rejoin attempts
@@ -373,7 +354,6 @@ export default function VideoConference() {
       sessionTracking.endSession()
       
       if (process.env.NODE_ENV === 'development') {
-        console.log('Call ended successfully, redirecting...');
       }
       
       // Redirect based on user role
@@ -385,7 +365,6 @@ export default function VideoConference() {
         router.push(`/courses/${courseId}/sessions`)
       }
     } catch (error) {
-      console.error("Error leaving session:", error)
       // Still redirect even if there's an error, based on user role
       if (userData?.role === 'super_admin') {
         router.push('/dashboard/super-admin/sessions')

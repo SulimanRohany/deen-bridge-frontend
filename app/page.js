@@ -65,21 +65,15 @@ import { enrollmentAPI, courseAPI } from '@/lib/api'
 import { config, getMediaUrl } from '@/lib/config'
 
 function toArray(v) {
-  console.log('🔄 toArray function called with:', v)
-  
   // Axios returns data in response.data
   const data = v?.data || v
-  console.log('🔄 toArray extracted data:', data)
   
   if (Array.isArray(data)) {
-    console.log('🔄 toArray: data is array, returning', data.length, 'items')
     return data
   }
   if (data && Array.isArray(data.results)) {
-    console.log('🔄 toArray: data.results is array, returning', data.results.length, 'items')
     return data.results
   }
-  console.log('🔄 toArray: no valid array found, returning empty array')
   return []
 }
 
@@ -1001,14 +995,6 @@ export default function Home() {
   const [scrollY, setScrollY] = useState(0)
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
 
-  console.log('🏠 Home component render', { 
-    hasUserData: !!userData, 
-    userName: userData?.full_name,
-    enrollmentsCount: enrollments.length,
-    isLoading,
-    error 
-  })
-
   // Parallax and mouse tracking
   useEffect(() => {
     const handleScroll = () => {
@@ -1031,31 +1017,18 @@ export default function Home() {
   // Load student data function - wrapped in useCallback
   const loadStudentData = useCallback(async (forceRefresh = false) => {
     try {
-      console.log('🔄 Loading student data...', { userData: !!userData, userId: userData?.id })
       setIsLoading(true)
       setError(null)
       
       if (!userData?.id) {
-        console.warn('⚠️ No user ID available, cannot load enrollments')
         setIsLoading(false)
         return
       }
       
-      console.log('📡 Making API request to enrollmentAPI.getEnrollments()')
-      console.log('📡 API function:', enrollmentAPI.getEnrollments)
-      console.log('📡 API base URL:', config.API_BASE_URL)
-      console.log('📡 Full URL will be:', config.API_BASE_URL + 'enrollment/')
-      console.log('📡 Filtering by student ID:', userData.id)
-      
       const enrollmentsData = await enrollmentAPI.getEnrollments({ student: userData.id })
-      console.log('📚 Enrollments data received:', enrollmentsData)
-      console.log('📚 Response status:', enrollmentsData?.status)
-      console.log('📚 Response data:', enrollmentsData?.data)
       const enrollmentsArray = toArray(enrollmentsData.data)
-      console.log('📚 Enrollments array:', enrollmentsArray.length, 'items')
       
       if (enrollmentsArray.length === 0) {
-        console.log('ℹ️ No enrollments found - showing empty state')
         setEnrollments([])
         setIsLoading(false)
         return
@@ -1067,33 +1040,21 @@ export default function Home() {
             // The backend serializer already provides class_data with full course details
             // Handle both class_enrolled (ID) and class_data (full object)
             const courseId = enrollment.class_enrolled || enrollment.course_id || enrollment.course || enrollment.timetable?.course || enrollment.timetable_data?.course?.id
-            console.log(`🔍 Enrollment structure:`, { 
-              id: enrollment.id,
-              hasClassEnrolled: !!enrollment.class_enrolled,
-              hasClassData: !!enrollment.class_data,
-              hasCourse: !!enrollment.course,
-              courseId: courseId,
-              status: enrollment.status
-            })
             
             if (!courseId) {
-              console.warn(`⚠️ No course ID found for enrollment ${enrollment.id}`)
               return enrollment
             }
             
             // Check if we already have class_data from the serializer
             let courseDetails
             if (enrollment.class_data) {
-              console.log(`✅ Using existing class_data for course: ${enrollment.class_data.title}`)
               courseDetails = enrollment.class_data
             } else {
-              console.log(`🔍 Fetching course details for course ID: ${courseId}`)
               const courseResponse = await courseAPI.getCourseById(courseId)
               courseDetails = courseResponse.data
             }
             
             // Fetch live sessions for this course
-            console.log(`📅 Fetching live sessions for course ID: ${courseId}`)
             try {
               const sessionsResponse = await courseAPI.getLiveSessions({ course: courseId })
               const sessions = toArray(sessionsResponse.data)
@@ -1106,54 +1067,34 @@ export default function Home() {
               })
               
               courseDetails.upcoming_sessions = upcomingSessions
-              console.log(`✅ Found ${upcomingSessions.length} upcoming sessions for course: ${courseDetails.title}`)
             } catch (sessionErr) {
-              console.warn(`⚠️ Could not fetch sessions for course ${courseId}:`, sessionErr)
               courseDetails.upcoming_sessions = []
             }
             
-            console.log(`✅ Course details received:`, { 
-              id: courseDetails.id, 
-              title: courseDetails.title,
-              upcomingSessions: courseDetails.upcoming_sessions?.length || 0
-            })
             return { ...enrollment, courseDetails, course: courseId }
           } catch (err) {
-            console.error(`❌ Error fetching course for enrollment ${enrollment.id}:`, err)
             return enrollment
           }
         })
       )
       
-      console.log('✅ All enriched enrollments:', enrichedEnrollments.map(e => ({
-        id: e.id,
-        status: e.status,
-        courseId: e.course,
-        courseTitle: e.courseDetails?.title,
-        hasCourseDetails: !!e.courseDetails
-      })))
       setEnrollments(enrichedEnrollments)
     } catch (err) {
-      console.error('❌ Error loading student data:', err)
       setError('Failed to load your learning data. Please try refreshing the page.')
     } finally {
       setIsLoading(false)
-      console.log('✅ Loading complete')
     }
   }, [userData])
 
   useEffect(() => {
-    console.log('🔍 useEffect triggered', { hasUserData: !!userData, isLoading, enrollmentsCount: enrollments.length })
     if (userData?.id) {
       // Only load if we haven't loaded enrollments yet (empty array means not loaded)
       // Don't check isLoading because it starts as true and we want to load on first render
       if (enrollments.length === 0) {
-        console.log('✅ userData exists and enrollments empty, calling loadStudentData()...')
         loadStudentData()
         
         // Safety timeout: force loading to false after 10 seconds
         const timeout = setTimeout(() => {
-          console.warn('⚠️ Loading timeout reached! Forcing isLoading to false')
           setIsLoading(false)
         }, 10000)
         
@@ -1163,7 +1104,6 @@ export default function Home() {
         setIsLoading(false)
       }
     } else if (!userData) {
-      console.log('⚠️ No userData, skipping data load')
       setIsLoading(false)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1179,7 +1119,6 @@ export default function Home() {
   const loadRecommendedCourses = useCallback(async () => {
     setLoadingRecommended(true)
     try {
-      console.log('🎯 Fetching recommended courses...')
       const response = await courseAPI.getCourses({ page_size: 6 })
       
       // Handle both paginated and non-paginated responses
@@ -1197,7 +1136,6 @@ export default function Home() {
         }
       }
       
-      console.log(`✅ Loaded ${courses.length} recommended courses`)
       setRecommendedCourses(courses)
     } catch (error) {
       // Handle network errors and other errors gracefully
@@ -1213,7 +1151,6 @@ export default function Home() {
           setRecommendedCourses([])
         } else if (error.response.status >= 500) {
           // Server errors - log but don't break the UI
-          console.error('❌ Server error loading recommended courses:', error.response.status)
           setRecommendedCourses([])
         } else {
           // Other client errors - handle gracefully
@@ -1235,7 +1172,6 @@ export default function Home() {
 
   // All hooks must be called before any early returns
   // Calculate enrollments data (always called, even if not used)
-  console.log('📊 Filtering enrollments:', enrollments.map(e => ({ id: e.id, status: e.status, course: e.course })))
   
   // In this system, 'completed' status means enrollment is active and student can access the course
   const activeEnrollments = enrollments.filter(e => e.status === 'completed')
@@ -1251,9 +1187,6 @@ export default function Home() {
   // State for recommended courses
   const [recommendedCourses, setRecommendedCourses] = useState([])
   const [loadingRecommended, setLoadingRecommended] = useState(false)
-  
-  console.log('✅ Active enrollments:', activeEnrollments.length)
-  console.log('✅ Completed enrollments:', completedEnrollments.length)
   
   const upcomingSessions = useMemo(() => {
     const sessions = []
@@ -1327,7 +1260,6 @@ export default function Home() {
 
   // If not logged in, show landing page
   if (!userData) {
-    console.log('🚪 Rendering landing page (no userData)')
     return (
       <>
         <style jsx global>{`
@@ -2345,7 +2277,6 @@ export default function Home() {
   // [Dashboard code remains the same as before...]
   
   if (isLoading) {
-    console.log('⏳ Rendering loading state...')
     return (
       <div className="min-h-screen bg-gradient-to-b from-background to-muted/5">
           <div className="container mx-auto px-4 py-8 lg:px-12 space-y-8">
@@ -2392,7 +2323,6 @@ export default function Home() {
     }
 
   if (error) {
-    console.log('❌ Rendering error state:', error)
     return (
       <div className="min-h-screen bg-gradient-to-b from-background via-primary/5 to-background">
         <div className="container mx-auto px-4 py-12 lg:px-12 space-y-12">
@@ -2422,11 +2352,6 @@ export default function Home() {
   }
 
   // Authenticated view starts here
-  console.log('✅ Rendering authenticated view', { 
-    activeEnrollments: activeEnrollments.length,
-    completedEnrollments: completedEnrollments.length,
-    upcomingSessions: upcomingSessions.length
-  })
   
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-primary/[0.02] to-secondary/[0.02]">
@@ -2674,11 +2599,6 @@ export default function Home() {
             )}
             
             {/* Continue Learning Section - High Priority UX */}
-            {console.log('🎯 Continue Learning check:', { 
-              activeEnrollmentsLength: activeEnrollments.length,
-              firstCourse: activeEnrollments[0]?.courseDetails?.title,
-              willShow: activeEnrollments.length > 0 
-            })}
             {activeEnrollments.length > 0 && (
               <Card className="border-2 border-primary/30 shadow-lg bg-gradient-to-br from-primary/5 via-background to-secondary/5">
                 <CardHeader className="pb-4">

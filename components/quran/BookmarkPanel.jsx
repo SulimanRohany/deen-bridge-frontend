@@ -35,7 +35,6 @@ export default function BookmarkPanel({ onNavigate }) {
   // Listen for bookmark updates
   useEffect(() => {
     const handleBookmarksUpdated = (event) => {
-      console.log('📚 Bookmarks updated, reloading...', event.detail)
       loadBookmarks()
     }
 

@@ -70,7 +70,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   } catch (error: any) {
     // Only log errors in development, not during build
     if (process.env.NODE_ENV === 'development' && error.code !== 'ECONNREFUSED') {
-      console.error('Error fetching courses for sitemap:', error);
     }
   }
 
@@ -101,7 +100,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   } catch (error: any) {
     // Only log errors in development, not during build
     if (process.env.NODE_ENV === 'development' && error.code !== 'ECONNREFUSED') {
-      console.error('Error fetching blogs for sitemap:', error);
     }
   }
 
@@ -132,7 +130,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   } catch (error: any) {
     // Only log errors in development, not during build
     if (process.env.NODE_ENV === 'development' && error.code !== 'ECONNREFUSED') {
-      console.error('Error fetching library items for sitemap:', error);
     }
   }
 

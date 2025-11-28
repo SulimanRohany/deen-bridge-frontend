@@ -111,7 +111,6 @@ export default function UnifiedCommunicationsPage() {
         setTotalPages(1)
       }
     } catch (error) {
-      console.error('Error fetching communications:', error)
       toast.error(error.message || 'Error loading communications')
     } finally {
       setLoading(false)
@@ -129,7 +128,6 @@ export default function UnifiedCommunicationsPage() {
       const data = await communicationsAPI.getCommunicationStats(accessToken)
       setStats(data)
     } catch (error) {
-      console.error('Error fetching stats:', error)
     }
   }
 
@@ -147,7 +145,6 @@ export default function UnifiedCommunicationsPage() {
       fetchStats()
       setShowDetailDialog(false)
     } catch (error) {
-      console.error('Error updating status:', error)
       toast.error(error.message || 'Error updating status')
     }
   }

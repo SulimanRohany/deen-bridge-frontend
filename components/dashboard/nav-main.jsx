@@ -21,12 +21,10 @@ export function NavMain({
         // For dashboard, only match exact URL to prevent it from being active on other pages
         if (itemUrl === '/dashboard/super-admin' || itemUrl === '/dashboard/teacher') {
             const isDashboardActive = activeItem === itemUrl;
-            console.log(`Dashboard check: ${itemUrl} === ${activeItem} = ${isDashboardActive}`);
             return isDashboardActive;
         }
         // For other items, match exact URL or if current path starts with the item URL followed by a slash
         const isOtherActive = activeItem === itemUrl || activeItem.startsWith(itemUrl + '/');
-        console.log(`Other check: ${itemUrl} vs ${activeItem} = ${isOtherActive}`);
         return isOtherActive;
     };
 

@@ -111,7 +111,6 @@ export default function CustomRequestsPage() {
         calculateStats(data)
       }
     } catch (error) {
-      console.error('Error fetching requests:', error)
       toast.error(error.message || 'Error loading requests')
     } finally {
       setLoading(false)
@@ -191,7 +190,6 @@ export default function CustomRequestsPage() {
       fetchRequests()
       setShowDetailDialog(false)
     } catch (error) {
-      console.error('Error updating status:', error)
       toast.error(error.message || 'Error updating status')
     }
   }
