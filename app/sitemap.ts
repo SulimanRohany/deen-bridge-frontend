@@ -46,9 +46,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Dynamic pages - Courses
   let coursePages: MetadataRoute.Sitemap = [];
   try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+    
     const coursesResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/courses/?page_size=1000`, {
       next: { revalidate: 3600 }, // Revalidate every hour
+      signal: controller.signal,
     });
+    
+    clearTimeout(timeoutId);
     
     if (coursesResponse.ok) {
       const coursesData = await coursesResponse.json();
@@ -61,16 +67,25 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         priority: 0.8,
       }));
     }
-  } catch (error) {
-    console.error('Error fetching courses for sitemap:', error);
+  } catch (error: any) {
+    // Only log errors in development, not during build
+    if (process.env.NODE_ENV === 'development' && error.code !== 'ECONNREFUSED') {
+      console.error('Error fetching courses for sitemap:', error);
+    }
   }
 
   // Dynamic pages - Blog posts
   let blogPages: MetadataRoute.Sitemap = [];
   try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+    
     const blogsResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/blogs/?status=published&page_size=1000`, {
       next: { revalidate: 3600 }, // Revalidate every hour
+      signal: controller.signal,
     });
+    
+    clearTimeout(timeoutId);
     
     if (blogsResponse.ok) {
       const blogsData = await blogsResponse.json();
@@ -83,16 +98,25 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         priority: 0.7,
       }));
     }
-  } catch (error) {
-    console.error('Error fetching blogs for sitemap:', error);
+  } catch (error: any) {
+    // Only log errors in development, not during build
+    if (process.env.NODE_ENV === 'development' && error.code !== 'ECONNREFUSED') {
+      console.error('Error fetching blogs for sitemap:', error);
+    }
   }
 
   // Dynamic pages - Library items
   let libraryPages: MetadataRoute.Sitemap = [];
   try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+    
     const libraryResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/library/?page_size=1000`, {
       next: { revalidate: 3600 }, // Revalidate every hour
+      signal: controller.signal,
     });
+    
+    clearTimeout(timeoutId);
     
     if (libraryResponse.ok) {
       const libraryData = await libraryResponse.json();
@@ -105,8 +129,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         priority: 0.6,
       }));
     }
-  } catch (error) {
-    console.error('Error fetching library items for sitemap:', error);
+  } catch (error: any) {
+    // Only log errors in development, not during build
+    if (process.env.NODE_ENV === 'development' && error.code !== 'ECONNREFUSED') {
+      console.error('Error fetching library items for sitemap:', error);
+    }
   }
 
   return [...staticPages, ...coursePages, ...blogPages, ...libraryPages];

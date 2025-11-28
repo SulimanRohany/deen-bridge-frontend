@@ -22,13 +22,7 @@ import {
   Share2
 } from 'lucide-react';
 
-interface VideoConferenceProps {
-  roomId?: string;
-  onRoomCreated?: (roomId: string) => void;
-  onRoomJoined?: (roomId: string) => void;
-}
-
-export function VideoConference({ roomId, onRoomCreated, onRoomJoined }: VideoConferenceProps) {
+export function VideoConference({ roomId, onRoomCreated, onRoomJoined }) {
   const {
     isConnected,
     isConnecting,
