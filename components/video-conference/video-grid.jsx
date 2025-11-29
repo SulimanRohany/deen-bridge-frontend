@@ -427,6 +427,7 @@ const VideoTile = function VideoTile({
       if (videoElement && videoElement.srcObject) {
         videoElement.srcObject = null;
       }
+
     }
   }, [participant.stream, participant.id, isLocal, localVideoRef, participant.name, participant.isVideoEnabled])
 
@@ -629,3 +630,4 @@ const VideoTile = function VideoTile({
     </Card>
   )
 }
+

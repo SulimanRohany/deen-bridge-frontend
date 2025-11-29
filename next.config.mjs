@@ -34,6 +34,16 @@ const nextConfig = {
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
     minimumCacheTTL: 60,
+    // Enable image optimization in standalone mode
+    dangerouslyAllowSVG: true,
+    contentDispositionType: 'attachment',
+    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
+    // Disable optimization to fix 404 errors in production
+    // The Next.js server in standalone mode cannot fetch images from api.deenbridge.com
+    // This serves images directly from the source URL, bypassing Next.js optimization
+    // To re-enable optimization: ensure the Next.js server can make outbound HTTPS requests to api.deenbridge.com
+    // and set this to false
+    unoptimized: true,
   },
   
   // Headers for SEO and Security

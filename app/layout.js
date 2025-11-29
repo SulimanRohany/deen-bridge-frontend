@@ -18,7 +18,7 @@ const geistMono = Geist_Mono({
 });
 
 // Generate default metadata
-export const metadata = generateSEOMetadata({
+const baseMetadata = generateSEOMetadata({
   title: "Deen Bridge - Online Islamic Education Platform",
   description: "Empowering Muslims worldwide with quality Islamic education. Learn Quran and Islamic studies from expert teachers online. Join thousands of students in our comprehensive courses.",
   keywords: [
@@ -40,6 +40,20 @@ export const metadata = generateSEOMetadata({
   type: "website",
 });
 
+// Add icon to metadata
+export const metadata = {
+  ...baseMetadata,
+  icons: {
+    icon: [
+      { url: '/Logo.png', type: 'image/png' },
+    ],
+    apple: [
+      { url: '/Logo.png', type: 'image/png' },
+    ],
+    shortcut: '/Logo.png',
+  },
+};
+
 export default function RootLayout({ children }) {
   const organizationSchema = generateOrganizationSchema();
   const websiteSchema = generateWebSiteSchema();
@@ -55,9 +69,10 @@ export default function RootLayout({ children }) {
         {/* DNS Prefetch for better performance */}
         <link rel="dns-prefetch" href="https://www.google-analytics.com" />
         
-        {/* Favicon */}
-        <link rel="icon" type="image/png" href="/Logo.png" />
-        <link rel="apple-touch-icon" href="/Logo.png" />
+        {/* Favicon - Using Logo.png */}
+        <link rel="icon" type="image/png" sizes="32x32" href="/Logo.png" />
+        <link rel="icon" type="image/png" sizes="16x16" href="/Logo.png" />
+        <link rel="apple-touch-icon" sizes="180x180" href="/Logo.png" />
         <link rel="shortcut icon" href="/Logo.png" />
         
         {/* Theme color */}
