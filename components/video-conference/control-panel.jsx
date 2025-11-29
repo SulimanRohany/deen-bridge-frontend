@@ -68,9 +68,15 @@ export function ControlPanel({
   unreadMessageCount = 0,
   userRole = 'member',
   isObserverMode = false,
+  isSessionInfoOpen: externalIsSessionInfoOpen,
+  setIsSessionInfoOpen: externalSetIsSessionInfoOpen,
 }) {
   const [copied, setCopied] = useState(false)
-  const [isSessionInfoOpen, setIsSessionInfoOpen] = useState(false)
+  const [internalIsSessionInfoOpen, setInternalIsSessionInfoOpen] = useState(false)
+  
+  // Use external state if provided, otherwise use internal state
+  const isSessionInfoOpen = externalIsSessionInfoOpen !== undefined ? externalIsSessionInfoOpen : internalIsSessionInfoOpen
+  const setIsSessionInfoOpen = externalSetIsSessionInfoOpen || setInternalIsSessionInfoOpen
   const [connectionQuality, setConnectionQuality] = useState({
     quality: 'good',
     bandwidth: { upload: 0, download: 0 },
@@ -129,21 +135,21 @@ export function ControlPanel({
   }
 
   return (
-    <div className="bg-gradient-to-t from-gray-900 via-gray-850 to-gray-800 border-t border-gray-700/50 backdrop-blur-xl p-3 md:p-4 shadow-2xl">
-      <div className="max-w-7xl mx-auto flex items-center justify-between">
+    <div className="bg-gradient-to-t from-gray-900 via-gray-850 to-gray-800 border-t border-gray-700/50 backdrop-blur-xl p-2 sm:p-3 md:p-4 shadow-2xl">
+      <div className="max-w-7xl mx-auto flex items-center justify-between gap-2 sm:gap-4">
         {/* Connection Quality Indicator - Left Side */}
         {getConnectionStats && (
           <div className="flex-shrink-0">
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <div className={`flex items-center gap-2 px-3 py-2 rounded-lg ${signalDisplay.bgColor} cursor-help transition-all hover:scale-105`}>
-                    <SignalIcon className={`w-4 h-4 ${signalDisplay.color}`} />
-                    <div className="flex flex-col">
-                      <span className={`text-xs font-semibold ${signalDisplay.color}`}>
+                  <div className={`flex items-center gap-1 sm:gap-1.5 md:gap-2 px-1.5 sm:px-2 md:px-3 py-1 sm:py-1.5 md:py-2 rounded-lg ${signalDisplay.bgColor} cursor-help transition-all hover:scale-105`}>
+                    <SignalIcon className={`w-3 h-3 sm:w-3.5 sm:h-3.5 md:w-4 md:h-4 ${signalDisplay.color}`} />
+                    <div className="flex flex-col hidden sm:flex">
+                      <span className={`text-[10px] md:text-xs font-semibold ${signalDisplay.color} leading-tight`}>
                         {signalDisplay.label}
                       </span>
-                      <span className="text-[10px] text-gray-400">
+                      <span className="text-[9px] md:text-[10px] text-gray-400 leading-tight">
                         {connectionQuality.latency ? `${connectionQuality.latency}ms` : '--'}
                       </span>
                     </div>
@@ -181,7 +187,7 @@ export function ControlPanel({
         )}
 
         {/* Control buttons - Center */}
-        <div className="flex items-center gap-1.5 sm:gap-2 flex-1 justify-center">
+        <div className="flex items-center gap-1 sm:gap-1.5 md:gap-2 flex-1 justify-center min-w-0">
           {/* Hide camera/mic/screen share buttons in observer mode */}
           {!isObserverMode && (
             <>
@@ -189,28 +195,28 @@ export function ControlPanel({
                 variant={isAudioEnabled ? "secondary" : "destructive"}
                 size="lg"
                 onClick={onToggleAudio}
-                className={`rounded-full w-11 h-11 sm:w-12 sm:h-12 p-0 transition-opacity duration-200 hover:opacity-70 shadow-lg ${
+                className={`rounded-full w-10 h-10 sm:w-11 sm:h-11 md:w-12 md:h-12 p-0 transition-opacity duration-200 hover:opacity-70 shadow-lg ${
                   isAudioEnabled
                     ? "bg-gray-700/90 text-white border border-gray-600"
                     : "bg-red-600/90 text-white animate-pulse border border-red-500"
                 }`}
                 title={isAudioEnabled ? "Mute microphone" : "Unmute microphone"}
               >
-                {isAudioEnabled ? <Mic className="w-4 h-4 sm:w-5 sm:h-5" /> : <MicOff className="w-4 h-4 sm:w-5 sm:h-5" />}
+                {isAudioEnabled ? <Mic className="w-4 h-4 sm:w-4 sm:h-4 md:w-5 md:h-5" /> : <MicOff className="w-4 h-4 sm:w-4 sm:h-4 md:w-5 md:h-5" />}
               </Button>
 
               <Button
                 variant={isVideoEnabled ? "secondary" : "destructive"}
                 size="lg"
                 onClick={onToggleVideo}
-                className={`rounded-full w-11 h-11 sm:w-12 sm:h-12 p-0 transition-opacity duration-200 hover:opacity-70 shadow-lg ${
+                className={`rounded-full w-10 h-10 sm:w-11 sm:h-11 md:w-12 md:h-12 p-0 transition-opacity duration-200 hover:opacity-70 shadow-lg ${
                   isVideoEnabled
                     ? "bg-gray-700/90 text-white border border-gray-600"
                     : "bg-red-600/90 text-white animate-pulse border border-red-500"
                 }`}
                 title={isVideoEnabled ? "Turn off camera" : "Turn on camera"}
               >
-                {isVideoEnabled ? <Video className="w-4 h-4 sm:w-5 sm:h-5" /> : <VideoOff className="w-4 h-4 sm:w-5 sm:h-5" />}
+                {isVideoEnabled ? <Video className="w-4 h-4 sm:w-4 sm:h-4 md:w-5 md:h-5" /> : <VideoOff className="w-4 h-4 sm:w-4 sm:h-4 md:w-5 md:h-5" />}
               </Button>
 
               <Button
@@ -218,7 +224,7 @@ export function ControlPanel({
                 size="lg"
                 onClick={onToggleScreenShare}
                 disabled={!isScreenShareSupported}
-                className={`rounded-full w-11 h-11 sm:w-12 sm:h-12 p-0 transition-opacity duration-200 hover:opacity-70 shadow-lg ${
+                className={`rounded-full w-10 h-10 sm:w-11 sm:h-11 md:w-12 md:h-12 p-0 transition-opacity duration-200 hover:opacity-70 shadow-lg hidden md:flex ${
                   !isScreenShareSupported
                     ? "bg-gray-700/50 text-gray-500 cursor-not-allowed opacity-50"
                     : isScreenSharing
@@ -233,23 +239,23 @@ export function ControlPanel({
                   : "Share screen"
             }
           >
-            {isScreenSharing ? <MonitorOff className="w-4 h-4 sm:w-5 sm:h-5" /> : <Monitor className="w-4 h-4 sm:w-5 sm:h-5" />}
+            {isScreenSharing ? <MonitorOff className="w-4 h-4 sm:w-4 sm:h-4 md:w-5 md:h-5" /> : <Monitor className="w-4 h-4 sm:w-4 sm:h-4 md:w-5 md:h-5" />}
           </Button>
             </>
           )}
 
-          <div className="w-px h-8 bg-gray-700 mx-1 hidden sm:block" />
+          <div className="w-px h-6 sm:h-8 bg-gray-700 mx-0.5 sm:mx-1 hidden sm:block" />
 
           <Button
             variant="secondary"
             size="lg"
             onClick={onToggleChat}
-            className="relative rounded-full w-11 h-11 sm:w-12 sm:h-12 p-0 bg-gray-700/90 text-white transition-opacity duration-200 hover:opacity-70 shadow-lg border border-gray-600"
+            className="relative rounded-full w-10 h-10 sm:w-11 sm:h-11 md:w-12 md:h-12 p-0 bg-gray-700/90 text-white transition-opacity duration-200 hover:opacity-70 shadow-lg border border-gray-600 hidden md:flex"
             title="Toggle chat"
           >
-            <MessageCircle className="w-4 h-4 sm:w-5 sm:h-5" />
+            <MessageCircle className="w-4 h-4 sm:w-4 sm:h-4 md:w-5 md:h-5" />
             {unreadMessageCount > 0 && (
-              <span className="absolute -top-1 -right-1 flex items-center justify-center min-w-[20px] h-5 px-1.5 bg-red-600 text-white text-xs font-bold rounded-full border-2 border-gray-900 shadow-lg animate-pulse">
+              <span className="absolute -top-1 -right-1 flex items-center justify-center min-w-[18px] sm:min-w-[20px] h-4 sm:h-5 px-1 sm:px-1.5 bg-red-600 text-white text-[10px] sm:text-xs font-bold rounded-full border-2 border-gray-900 shadow-lg animate-pulse">
                 {unreadMessageCount > 99 ? '99+' : unreadMessageCount}
               </span>
             )}
@@ -259,71 +265,104 @@ export function ControlPanel({
             variant="secondary"
             size="lg"
             onClick={() => setIsSessionInfoOpen(true)}
-            className="rounded-full w-11 h-11 sm:w-12 sm:h-12 p-0 bg-gray-700/90 text-white transition-opacity duration-200 hover:opacity-70 shadow-lg border border-gray-600 hidden md:flex"
+            className="rounded-full w-10 h-10 sm:w-11 sm:h-11 md:w-12 md:h-12 p-0 bg-gray-700/90 text-white transition-opacity duration-200 hover:opacity-70 shadow-lg border border-gray-600 hidden md:flex"
             title="Session information"
           >
-            <Info className="w-4 h-4 sm:w-5 sm:h-5" />
+            <Info className="w-4 h-4 sm:w-4 sm:h-4 md:w-5 md:h-5" />
           </Button>
 
           <Button
             variant="secondary"
             size="lg"
             onClick={onToggleFullscreen}
-            className="rounded-full w-11 h-11 sm:w-12 sm:h-12 p-0 bg-gray-700/90 text-white transition-opacity duration-200 hover:opacity-70 shadow-lg border border-gray-600 hidden lg:flex"
+            className="rounded-full w-10 h-10 sm:w-11 sm:h-11 md:w-12 md:h-12 p-0 bg-gray-700/90 text-white transition-opacity duration-200 hover:opacity-70 shadow-lg border border-gray-600 hidden md:flex"
             title="Toggle fullscreen"
           >
-            <Maximize className="w-4 h-4 sm:w-5 sm:h-5" />
+            <Maximize className="w-4 h-4 sm:w-4 sm:h-4 md:w-5 md:h-5" />
           </Button>
 
-          {/* More Menu - Shows on smaller screens to provide access to hidden features */}
+          {/* More Menu - Shows on mobile to provide access to hidden features */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
                 variant="secondary"
                 size="lg"
-                className="rounded-full w-11 h-11 sm:w-12 sm:h-12 p-0 bg-gray-700/90 text-white transition-opacity duration-200 hover:opacity-70 shadow-lg border border-gray-600 lg:hidden"
+                className="rounded-full w-10 h-10 sm:w-11 sm:h-11 md:w-12 md:h-12 p-0 bg-gray-700/90 text-white transition-opacity duration-200 hover:opacity-70 shadow-lg border border-gray-600 md:hidden"
                 title="More options"
               >
-                <MoreVertical className="w-4 h-4 sm:w-5 sm:h-5" />
+                <MoreVertical className="w-4 h-4 sm:w-4 sm:h-4 md:w-5 md:h-5" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent 
               align="end" 
               side="top"
-              className="bg-gray-800 border-gray-700 text-white min-w-[200px]"
+              sideOffset={8}
+              alignOffset={-8}
+              className="bg-gray-800 border-gray-700 text-white w-[180px] sm:min-w-[200px] mb-2 z-50"
             >
+              {!isObserverMode && (
+                <DropdownMenuItem 
+                  onClick={onToggleScreenShare}
+                  disabled={!isScreenShareSupported}
+                  className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2.5 sm:py-3 cursor-pointer hover:bg-gray-700 focus:bg-gray-700 active:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation"
+                >
+                  {isScreenSharing ? (
+                    <>
+                      <MonitorOff className="w-4 h-4 sm:w-4 sm:h-4 flex-shrink-0" />
+                      <span className="text-sm sm:text-base">Stop Screen Share</span>
+                    </>
+                  ) : (
+                    <>
+                      <Monitor className="w-4 h-4 sm:w-4 sm:h-4 flex-shrink-0" />
+                      <span className="text-sm sm:text-base">Share Screen</span>
+                    </>
+                  )}
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuItem 
+                onClick={onToggleChat}
+                className="relative flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2.5 sm:py-3 cursor-pointer hover:bg-gray-700 focus:bg-gray-700 active:bg-gray-600 touch-manipulation"
+              >
+                <MessageCircle className="w-4 h-4 sm:w-4 sm:h-4 flex-shrink-0" />
+                <span className="text-sm sm:text-base">Toggle Chat</span>
+                {unreadMessageCount > 0 && (
+                  <span className="ml-auto flex items-center justify-center min-w-[18px] sm:min-w-[20px] h-4.5 sm:h-5 px-1 sm:px-1.5 bg-red-600 text-white text-[10px] sm:text-xs font-bold rounded-full">
+                    {unreadMessageCount > 99 ? '99+' : unreadMessageCount}
+                  </span>
+                )}
+              </DropdownMenuItem>
               <DropdownMenuItem 
                 onClick={() => setIsSessionInfoOpen(true)}
-                className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-gray-700 focus:bg-gray-700 md:hidden"
+                className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2.5 sm:py-3 cursor-pointer hover:bg-gray-700 focus:bg-gray-700 active:bg-gray-600 touch-manipulation"
               >
-                <Info className="w-4 h-4" />
-                <span>Session Information</span>
+                <Info className="w-4 h-4 sm:w-4 sm:h-4 flex-shrink-0" />
+                <span className="text-sm sm:text-base">Session Information</span>
               </DropdownMenuItem>
               <DropdownMenuItem 
                 onClick={onToggleFullscreen}
-                className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-gray-700 focus:bg-gray-700"
+                className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2.5 sm:py-3 cursor-pointer hover:bg-gray-700 focus:bg-gray-700 active:bg-gray-600 touch-manipulation"
               >
-                <Maximize className="w-4 h-4" />
-                <span>Toggle Fullscreen</span>
+                <Maximize className="w-4 h-4 sm:w-4 sm:h-4 flex-shrink-0" />
+                <span className="text-sm sm:text-base">Toggle Fullscreen</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <div className="w-px h-8 bg-gray-700 mx-1 hidden sm:block" />
+          <div className="w-px h-6 sm:h-8 bg-gray-700 mx-0.5 sm:mx-1 hidden sm:block" />
 
           <Button
             variant="destructive"
             size="lg"
             onClick={onLeaveCall}
-            className="rounded-full w-11 h-11 sm:w-12 sm:h-12 p-0 bg-red-600/90 transition-opacity duration-200 hover:opacity-70 shadow-lg border border-red-500"
+            className="rounded-full w-10 h-10 sm:w-11 sm:h-11 md:w-12 md:h-12 p-0 bg-red-600/90 transition-opacity duration-200 hover:opacity-70 shadow-lg border border-red-500"
             title="Leave call"
           >
-            <Phone className="w-4 h-4 sm:w-5 sm:h-5 rotate-[135deg]" />
+            <Phone className="w-4 h-4 sm:w-4 sm:h-4 md:w-5 md:h-5 rotate-[135deg]" />
           </Button>
         </div>
 
-        {/* Spacer for balanced layout */}
-        <div className="flex-shrink-0 w-24"></div>
+        {/* Spacer for balanced layout - Hidden on mobile */}
+        <div className="flex-shrink-0 w-0 sm:w-12 md:w-24 hidden sm:block"></div>
       </div>
 
       {/* Session Info Sheet */}

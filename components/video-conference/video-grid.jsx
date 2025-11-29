@@ -181,10 +181,15 @@ export function VideoGrid({ localStream, participants, remoteStreams, remotePart
 
   // Render in spotlight mode (pinned participant)
   if (pinnedParticipant && unpinnedParticipants.length > 0) {
+    const unpinnedCount = unpinnedParticipants.length
+    const maxVisible = 6
+    const visibleParticipants = unpinnedParticipants.slice(0, maxVisible)
+    const hasMore = unpinnedCount > maxVisible
+    
     return (
-      <div className="h-full w-full flex flex-col lg:flex-row gap-3 p-3">
+      <div className="h-full w-full flex flex-col md:flex-row gap-1.5 sm:gap-2 md:gap-3 p-1.5 sm:p-2 md:p-3">
         {/* Main spotlight view */}
-        <div className="flex-1 flex items-center justify-center min-h-0">
+        <div className="flex-1 flex items-center justify-center min-h-0 w-full md:w-auto">
           <VideoTile
             participant={pinnedParticipant}
             isLocal={pinnedParticipant.isLocal}
@@ -197,14 +202,15 @@ export function VideoGrid({ localStream, participants, remoteStreams, remotePart
         </div>
         
         {/* Sidebar with other participants */}
-        <div className="w-full lg:w-72 h-auto lg:h-full overflow-y-auto">
-          <div className="flex flex-row lg:flex-col gap-2 overflow-x-auto lg:overflow-x-visible pb-2 lg:pb-0">
-            {unpinnedParticipants.slice(0, 6).map((participant) => (
-              <div key={participant.id} className="flex-shrink-0 w-40 lg:w-full lg:aspect-video">
+        <div className="w-full md:w-56 lg:w-64 xl:w-56 h-auto md:h-full overflow-y-auto">
+          {/* Desktop/Tablet grid layout - smaller compact tiles */}
+          <div className="hidden md:flex flex-col gap-1.5 h-full">
+            {visibleParticipants.map((participant) => (
+              <div key={participant.id} className="flex-shrink-0 h-32 lg:h-36 xl:h-32 w-full relative">
                 <VideoTile
                   participant={participant}
                   isLocal={participant.isLocal}
-                  localVideoRef={participant.isLocal ? localVideoRef : null}
+                  localVideoRef={null}
                   participantCount={unpinnedParticipants.length}
                   isCompact={true}
                   onPin={() => handlePinParticipant(participant.id)}
@@ -212,15 +218,44 @@ export function VideoGrid({ localStream, participants, remoteStreams, remotePart
                 />
               </div>
             ))}
-            {unpinnedParticipants.length > 6 && (
+            {hasMore && (
               <Button
                 variant="secondary"
-                className="flex-shrink-0 w-40 lg:w-full aspect-video bg-gray-800/90 hover:bg-gray-700 border border-gray-600"
+                className="flex-shrink-0 h-32 lg:h-36 xl:h-32 bg-gray-800/90 hover:bg-gray-700 border border-gray-600"
                 onClick={() => setShowAllParticipants(true)}
               >
                 <div className="text-center">
-                  <Users className="w-6 h-6 mx-auto mb-1" />
-                  <div className="text-xs">+{unpinnedParticipants.length - 6} more</div>
+                  <Users className="w-5 h-5 lg:w-6 lg:h-6 mx-auto mb-1" />
+                  <div className="text-[10px] lg:text-xs">+{unpinnedCount - maxVisible} more</div>
+                </div>
+              </Button>
+            )}
+          </div>
+          
+          {/* Mobile horizontal scroll layout */}
+          <div className="flex md:hidden flex-row gap-1.5 overflow-x-auto pb-2">
+            {visibleParticipants.map((participant) => (
+              <div key={participant.id} className="flex-shrink-0 w-32 sm:w-36 aspect-[4/3]">
+                <VideoTile
+                  participant={participant}
+                  isLocal={participant.isLocal}
+                  localVideoRef={null}
+                  participantCount={unpinnedParticipants.length}
+                  isCompact={true}
+                  onPin={() => handlePinParticipant(participant.id)}
+                  isActiveSpeaker={activeSpeakerId === participant.id}
+                />
+              </div>
+            ))}
+            {hasMore && (
+              <Button
+                variant="secondary"
+                className="flex-shrink-0 w-32 sm:w-36 aspect-[4/3] bg-gray-800/90 hover:bg-gray-700 border border-gray-600"
+                onClick={() => setShowAllParticipants(true)}
+              >
+                <div className="text-center">
+                  <Users className="w-5 h-5 sm:w-6 sm:h-6 mx-auto mb-1" />
+                  <div className="text-[10px] sm:text-xs">+{unpinnedCount - maxVisible} more</div>
                 </div>
               </Button>
             )}
@@ -367,31 +402,28 @@ const VideoTile = function VideoTile({
 
   // Handle video stream - with track state monitoring
   useEffect(() => {
-    const videoElement = isLocal ? localVideoRef?.current : videoRef.current;
+    // For local video in sidebar (when localVideoRef is null), use videoRef
+    // For local video when pinned (when localVideoRef is provided), use localVideoRef
+    // For remote video, always use videoRef
+    const videoElement = isLocal && localVideoRef?.current
+      ? localVideoRef.current
+      : videoRef.current;
     
 
     if (videoElement && participant.stream) {
       
       videoElement.srcObject = participant.stream;
       
-      // Force play for remote streams to handle autoplay restrictions
-      if (!isLocal) {
-        videoElement.play().catch(err => {
-        });
-      }
-    } else if (!isLocal && !participant.stream) {
-      // For remote participants without a stream yet, this is normal during initial join
-      // Don't log as an error, just as info
-      
+      // Force play for all streams to handle autoplay restrictions
+      setTimeout(() => {
+        if (videoElement && videoElement.srcObject) {
+          videoElement.play().catch(err => {
+            // Silently handle play errors
+          });
+        }
+      }, isLocal ? 50 : 100);
+    } else if (!participant.stream) {
       // Clear any existing srcObject to avoid showing stale video
-      if (videoElement && videoElement.srcObject) {
-        videoElement.srcObject = null;
-      }
-    } else if (isLocal && !participant.stream) {
-      // For local participant, this might happen during cleanup/unmount
-      // Log as warning instead of error
-      
-      // Clear srcObject to avoid showing stale video
       if (videoElement && videoElement.srcObject) {
         videoElement.srcObject = null;
       }
@@ -436,7 +468,7 @@ const VideoTile = function VideoTile({
 
   return (
     <Card 
-      className={`relative aspect-video bg-gray-900 overflow-hidden transition-all duration-200 min-h-0 w-full max-h-full group rounded-lg
+      className={`relative ${isCompact ? 'h-full w-full' : 'aspect-video'} bg-gray-900 overflow-hidden transition-all duration-200 min-h-0 w-full max-h-full group rounded-lg p-0
         ${isActiveSpeaker ? 'ring-2 ring-green-500' : ''}
         ${isPinned ? 'ring-2 ring-primary' : ''}
       `}
@@ -457,17 +489,28 @@ const VideoTile = function VideoTile({
       {/* Render video element ONLY when should show video */}
       {shouldShowVideo && hasVideo && (
         <video
-          ref={isLocal ? localVideoRef : videoRef}
+          ref={isLocal && localVideoRef ? localVideoRef : videoRef}
           autoPlay
           playsInline
           muted={isLocal}
-          className="w-full h-full object-cover"
+          className="absolute inset-0 w-full h-full object-cover z-0"
+          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
         />
       )}
       
-      {/* Show avatar if video should NOT be shown */}
-      {!shouldShowVideo && (
-        <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-800 to-gray-900">
+      {/* Show loading state ONLY if video is enabled but stream isn't ready yet (for remote participants) */}
+      {participant.isVideoEnabled && !participant.stream && !isLocal && !participant.isScreenSharing && (
+        <div className="absolute inset-0 flex items-center justify-center bg-gray-800/50 z-10">
+          <div className="text-center text-white">
+            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mx-auto mb-1" />
+            <p className="text-[10px]">Loading...</p>
+          </div>
+        </div>
+      )}
+      
+      {/* Show avatar placeholder when video is disabled or not available */}
+      {(!participant.isVideoEnabled || !shouldShowVideo) && !(participant.isVideoEnabled && !participant.stream && !isLocal) && (
+        <div className="absolute inset-0 w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-800 to-gray-900 z-0">
           <Avatar className={`${getAvatarSize()}`}>
             <AvatarFallback className={`bg-gradient-to-br from-primary to-secondary text-white ${getAvatarTextSize()} font-semibold`}>
               {participant.name.charAt(0).toUpperCase()}
@@ -499,21 +542,21 @@ const VideoTile = function VideoTile({
       )}
 
       {/* Bottom overlay - Name and controls */}
-      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-2 transition-all duration-200">
-        <div className="flex items-center justify-between gap-2">
+      <div className={`absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent transition-all duration-200 ${isCompact ? 'p-1 sm:p-1.5' : 'p-2'}`}>
+        <div className="flex items-center justify-between gap-1 sm:gap-2">
           {/* Name and local indicator */}
-          <div className="flex items-center gap-1.5 min-w-0 flex-1">
+          <div className="flex items-center gap-1 min-w-0 flex-1">
             <span className={`text-white ${getNameTextSize()} font-medium truncate`}>
               {participant.name}
             </span>
-            {isLocal && (
-              <Badge className={`${isCompact ? 'text-[8px] px-1 py-0' : 'text-[9px] px-1.5 py-0'} bg-primary border-0`}>
+            {isLocal && !isCompact && (
+              <Badge className={`text-[9px] px-1.5 py-0 bg-primary border-0`}>
                 You
               </Badge>
             )}
-            {participant.role === 'moderator' && (
-              <Badge className={`${isCompact ? 'text-[8px] px-1 py-0' : 'text-[9px] px-1.5 py-0'} bg-gradient-to-r from-amber-500 to-orange-500 border-0 flex items-center gap-0.5`}>
-                <svg xmlns="http://www.w3.org/2000/svg" className={`${isCompact ? 'h-2 w-2' : 'h-2.5 w-2.5'}`} viewBox="0 0 20 20" fill="currentColor">
+            {participant.role === 'moderator' && !isCompact && (
+              <Badge className={`text-[9px] px-1.5 py-0 bg-gradient-to-r from-amber-500 to-orange-500 border-0 flex items-center gap-0.5`}>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-2.5 w-2.5" viewBox="0 0 20 20" fill="currentColor">
                   <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                 </svg>
                 Teacher
@@ -522,7 +565,7 @@ const VideoTile = function VideoTile({
           </div>
           
           {/* Audio/Video indicators */}
-          <div className="flex items-center gap-1 flex-shrink-0">
+          <div className="flex items-center gap-0.5 sm:gap-1 flex-shrink-0">
             <div 
               className={`${isCompact ? 'p-0.5' : 'p-1'} rounded-full transition-colors ${
                 participant.isAudioEnabled 
@@ -556,7 +599,7 @@ const VideoTile = function VideoTile({
       </div>
 
       {/* Active speaker indicator */}
-      {isActiveSpeaker && (
+      {isActiveSpeaker && !isCompact && (
         <div className="absolute top-2 left-2">
           <Badge className="bg-green-500 text-white text-xs px-2 py-0.5">
             Speaking
@@ -565,7 +608,7 @@ const VideoTile = function VideoTile({
       )}
 
       {/* Screen sharing indicator */}
-      {participant.isScreenSharing && (
+      {participant.isScreenSharing && !isCompact && (
         <div className={`absolute ${isActiveSpeaker ? 'top-10' : 'top-2'} left-2 z-10`}>
           <Badge className="bg-primary text-white text-xs px-2 py-0.5 flex items-center gap-1">
             <Monitor className="w-3 h-3" />

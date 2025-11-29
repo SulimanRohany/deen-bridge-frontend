@@ -31,6 +31,7 @@ export default function VideoConference() {
   const [userRole, setUserRole] = useState('member') // Track user role (member or moderator)
   const [isObserverMode, setIsObserverMode] = useState(false) // Track if user is in observer mode (super admin monitoring)
   const hasAttemptedJoinRef = useRef(false) // Track if join has been attempted to prevent duplicates
+  const [isSessionInfoOpen, setIsSessionInfoOpen] = useState(false) // Track session info sheet state
   
   // Check if screen sharing is supported
   const isScreenShareSupported = typeof navigator !== 'undefined' && 
@@ -507,6 +508,8 @@ export default function VideoConference() {
           getConnectionStats={getConnectionStats}
           userRole={userRole}
           isObserverMode={isObserverMode}
+          isSessionInfoOpen={isSessionInfoOpen}
+          setIsSessionInfoOpen={setIsSessionInfoOpen}
         />
       </div>
 

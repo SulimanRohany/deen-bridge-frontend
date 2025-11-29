@@ -64,6 +64,9 @@ export default function RootLayout({ children }) {
         <meta name="theme-color" content="#2563eb" />
         <meta name="msapplication-TileColor" content="#2563eb" />
         
+        {/* Permissions Policy - Allow camera and microphone for live sessions */}
+        <meta httpEquiv="Permissions-Policy" content="camera=(self), microphone=(self), geolocation=()" />
+        
         {/* Structured Data - Organization */}
         <Script
           id="organization-schema"
