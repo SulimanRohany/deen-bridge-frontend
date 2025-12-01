@@ -71,6 +71,8 @@ import {
 import { IconEye, IconEyeOff } from '@tabler/icons-react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
+import CreateParentAccountDialog from '@/components/dashboard/parent/CreateParentAccountDialog';
+import { Users as UsersIcon } from 'lucide-react';
 
 
 
@@ -92,7 +94,9 @@ export default function UsersPage() {
   const [openViewDialog, setOpenViewDialog] = useState(false);
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [openPasswordDialog, setOpenPasswordDialog] = useState(false);
+  const [openParentAccountDialog, setOpenParentAccountDialog] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
+  const [selectedStudentForParent, setSelectedStudentForParent] = useState(null);
   const [formData, setFormData] = useState({
     email: '',
     full_name: '',
@@ -649,6 +653,18 @@ export default function UsersPage() {
                           <Lock className="h-4 w-4 text-secondary" />
                           <span>Password</span>
                         </DropdownMenuItem>
+                        {user.role === 'student' && (
+                          <DropdownMenuItem 
+                            onClick={() => {
+                              setSelectedStudentForParent(user);
+                              setOpenParentAccountDialog(true);
+                            }}
+                            className="cursor-pointer flex items-center gap-2 text-blue-600"
+                          >
+                            <UsersIcon className="h-4 w-4" />
+                            <span>Create Parent Account</span>
+                          </DropdownMenuItem>
+                        )}
                         <DropdownMenuItem 
                           onClick={() => openDeleteConfirmation(user)}
                           className="cursor-pointer flex items-center gap-2 text-red-600"
@@ -1101,6 +1117,17 @@ export default function UsersPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Create Parent Account Dialog */}
+      <CreateParentAccountDialog
+        open={openParentAccountDialog}
+        onOpenChange={setOpenParentAccountDialog}
+        student={selectedStudentForParent}
+        onSuccess={() => {
+          fetchUsers();
+          setSelectedStudentForParent(null);
+        }}
+      />
     </div>
   );
 }

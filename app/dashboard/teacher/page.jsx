@@ -135,15 +135,15 @@ export default function TeacherDashboard() {
   }
 
   return (
-    <div className="p-6 md:p-8 bg-gradient-to-br from-slate-50 to-blue-50/30 dark:from-slate-950 dark:to-blue-950/30 min-h-screen">
+    <div className="p-6 md:p-8 bg-background min-h-screen">
       {/* Professional Header */}
       <div className="mb-8">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white mb-1 tracking-tight">
+            <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-1 tracking-tight">
               Assalamu Alaikum, Teacher
             </h1>
-            <p className="text-slate-600 dark:text-slate-400 text-sm flex items-center gap-2">
+            <p className="text-muted-foreground text-sm flex items-center gap-2">
               <span className="inline-block w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
               {new Date().toLocaleDateString('en-US', { 
                 weekday: 'long', 
@@ -157,7 +157,6 @@ export default function TeacherDashboard() {
           <Button 
             onClick={fetchDashboardData} 
             variant="outline"
-            className="border-slate-200 dark:border-slate-700 hover:bg-white dark:hover:bg-slate-800"
           >
             <IconRefresh className="mr-2 h-4 w-4" />
             Refresh
@@ -209,17 +208,16 @@ export default function TeacherDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
         {/* Recent Enrollments */}
         <div className="lg:col-span-2">
-          <Card className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
-            <CardHeader className="border-b border-slate-100 dark:border-slate-800 px-6 py-4">
+          <Card className="bg-card border border-border">
+            <CardHeader className="border-b border-border px-6 py-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle className="text-lg font-semibold text-slate-900 dark:text-white">Recent Enrollments</CardTitle>
-                  <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Latest student registrations in your classes</p>
+                  <CardTitle className="text-lg font-semibold text-foreground">Recent Enrollments</CardTitle>
+                  <p className="text-sm text-muted-foreground mt-1">Latest student registrations in your classes</p>
                 </div>
                 <Button 
                   variant="ghost" 
                   size="sm"
-                  className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-950"
                   onClick={() => router.push('/dashboard/teacher/students')}
                 >
                   View All
@@ -231,32 +229,32 @@ export default function TeacherDashboard() {
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
-                    <TableRow className="border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 hover:bg-slate-50 dark:hover:bg-slate-900/50">
-                      <TableHead className="font-semibold text-slate-700 dark:text-slate-300 py-3 px-6">Student</TableHead>
-                      <TableHead className="font-semibold text-slate-700 dark:text-slate-300 py-3">Class</TableHead>
-                      <TableHead className="font-semibold text-slate-700 dark:text-slate-300 py-3">Date</TableHead>
-                      <TableHead className="text-right font-semibold text-slate-700 dark:text-slate-300 py-3 px-6">Status</TableHead>
+                    <TableRow className="border-b border-border bg-muted/50 hover:bg-muted/50">
+                      <TableHead className="font-semibold text-foreground py-3 px-6">Student</TableHead>
+                      <TableHead className="font-semibold text-foreground py-3">Class</TableHead>
+                      <TableHead className="font-semibold text-foreground py-3">Date</TableHead>
+                      <TableHead className="text-right font-semibold text-foreground py-3 px-6">Status</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {dashboardData.recent_enrollments && dashboardData.recent_enrollments.length > 0 ? (
                       dashboardData.recent_enrollments.map((enrollment, index) => (
-                        <TableRow key={enrollment?.id || index} className="border-b border-slate-100 dark:border-slate-800 last:border-0 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                        <TableRow key={enrollment?.id || index} className="border-b border-border last:border-0 hover:bg-muted/50 transition-colors">
                           <TableCell className="py-4 px-6">
                             <div className="flex items-center gap-3">
                               <div className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-semibold text-sm shadow-sm">
                                 {enrollment?.student_name?.[0]?.toUpperCase() || 'S'}
                               </div>
                               <div>
-                                <div className="text-sm font-medium text-slate-900 dark:text-white">{enrollment?.student_name}</div>
+                                <div className="text-sm font-medium text-foreground">{enrollment?.student_name}</div>
                               </div>
                             </div>
                           </TableCell>
                           <TableCell className="py-4">
-                            <span className="text-sm text-slate-700 dark:text-slate-300">{enrollment?.class_title}</span>
+                            <span className="text-sm text-foreground">{enrollment?.class_title}</span>
                           </TableCell>
                           <TableCell className="py-4">
-                            <span className="text-sm text-slate-600 dark:text-slate-400">{formatDate(enrollment?.enrolled_at)}</span>
+                            <span className="text-sm text-muted-foreground">{formatDate(enrollment?.enrolled_at)}</span>
                           </TableCell>
                           <TableCell className="text-right py-4 px-6">
                             {enrollment?.student_is_active ? (
@@ -269,7 +267,7 @@ export default function TeacherDashboard() {
                       ))
                     ) : (
                       <TableRow>
-                        <TableCell colSpan={4} className="text-center text-slate-500 dark:text-slate-400 py-8">
+                        <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
                           No recent enrollments
                         </TableCell>
                       </TableRow>
@@ -284,11 +282,11 @@ export default function TeacherDashboard() {
         {/* Quick Actions & Stats */}
         <div className="space-y-6">
           {/* Quick Actions */}
-          <Card className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
-            <CardHeader className="border-b border-slate-100 dark:border-slate-800 px-6 py-4">
+          <Card className="bg-card border border-border">
+            <CardHeader className="border-b border-border px-6 py-4">
               <div>
-                <CardTitle className="text-lg font-semibold text-slate-900 dark:text-white">Quick Actions</CardTitle>
-                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Access your teaching tools</p>
+                <CardTitle className="text-lg font-semibold text-foreground">Quick Actions</CardTitle>
+                <p className="text-sm text-muted-foreground mt-1">Access your teaching tools</p>
               </div>
             </CardHeader>
             <CardContent className="p-6">
@@ -322,11 +320,11 @@ export default function TeacherDashboard() {
           </Card>
 
           {/* Popular Classes */}
-          <Card className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
-            <CardHeader className="border-b border-slate-100 dark:border-slate-800 px-6 py-4">
+          <Card className="bg-card border border-border">
+            <CardHeader className="border-b border-border px-6 py-4">
               <div>
-                <CardTitle className="text-lg font-semibold text-slate-900 dark:text-white">My Class Performance</CardTitle>
-                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Enrollment rates across classes</p>
+                <CardTitle className="text-lg font-semibold text-foreground">My Class Performance</CardTitle>
+                <p className="text-sm text-muted-foreground mt-1">Enrollment rates across classes</p>
               </div>
             </CardHeader>
             <CardContent className="p-6">
@@ -334,19 +332,19 @@ export default function TeacherDashboard() {
                 {dashboardData.popular_classes.length > 0 ? (
                   dashboardData.popular_classes.map((classItem, index) => {
                     const colorSchemes = [
-                      { bar: 'bg-blue-500 dark:bg-blue-600', bg: 'bg-slate-100 dark:bg-slate-800', text: 'text-blue-600 dark:text-blue-400' },
-                      { bar: 'bg-purple-500 dark:bg-purple-600', bg: 'bg-slate-100 dark:bg-slate-800', text: 'text-purple-600 dark:text-purple-400' },
-                      { bar: 'bg-emerald-500 dark:bg-emerald-600', bg: 'bg-slate-100 dark:bg-slate-800', text: 'text-emerald-600 dark:text-emerald-400' },
-                      { bar: 'bg-amber-500 dark:bg-amber-600', bg: 'bg-slate-100 dark:bg-slate-800', text: 'text-amber-600 dark:text-amber-400' }
+                      { bar: 'bg-blue-500 dark:bg-blue-600', bg: 'bg-muted', text: 'text-blue-600 dark:text-blue-400' },
+                      { bar: 'bg-purple-500 dark:bg-purple-600', bg: 'bg-muted', text: 'text-purple-600 dark:text-purple-400' },
+                      { bar: 'bg-emerald-500 dark:bg-emerald-600', bg: 'bg-muted', text: 'text-emerald-600 dark:text-emerald-400' },
+                      { bar: 'bg-amber-500 dark:bg-amber-600', bg: 'bg-muted', text: 'text-amber-600 dark:text-amber-400' }
                     ];
                     const scheme = colorSchemes[index % colorSchemes.length];
                     
                     return (
                       <div key={index}>
                         <div className="flex items-center justify-between mb-2">
-                          <span className="text-sm font-medium text-slate-900 dark:text-white truncate flex-1">{classItem.title}</span>
+                          <span className="text-sm font-medium text-foreground truncate flex-1">{classItem.title}</span>
                           <div className="flex items-center gap-3 flex-shrink-0 ml-3">
-                            <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                            <span className="text-xs text-muted-foreground font-medium">
                               {classItem.enrolled} / {classItem.capacity}
                             </span>
                             <span className={`text-sm font-bold ${scheme.text} min-w-[50px] text-right`}>
@@ -367,7 +365,7 @@ export default function TeacherDashboard() {
                     );
                   })
                 ) : (
-                  <div className="text-center text-slate-500 dark:text-slate-400 py-4">
+                  <div className="text-center text-muted-foreground py-4">
                     No classes available
                   </div>
                 )}
@@ -380,13 +378,13 @@ export default function TeacherDashboard() {
       {/* Live Sessions Section */}
       <div className="mt-6">
         <div className="mb-6">
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Session Management</h2>
-          <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">Monitor and manage your teaching sessions</p>
+          <h2 className="text-2xl font-bold text-foreground">Session Management</h2>
+          <p className="text-sm text-muted-foreground mt-1">Monitor and manage your teaching sessions</p>
         </div>
         
         <div className="grid grid-cols-1 gap-6">
           {/* Sessions in Progress */}
-          <Card className="bg-white dark:bg-slate-900 border-2 border-emerald-200 dark:border-emerald-900 overflow-hidden">
+          <Card className="bg-card border-2 border-emerald-200 dark:border-emerald-900 overflow-hidden">
             <CardHeader className="bg-gradient-to-r from-emerald-50 to-green-50 dark:from-emerald-950 dark:to-green-950 border-b border-emerald-100 dark:border-emerald-900 px-6 py-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -394,10 +392,10 @@ export default function TeacherDashboard() {
                     <IconVideo className="h-6 w-6 text-white" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                    <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
                       Sessions in Progress
                     </h3>
-                    <p className="text-sm text-slate-600 dark:text-slate-400">
+                    <p className="text-sm text-muted-foreground">
                       {dashboardData.ongoing_live_sessions && dashboardData.ongoing_live_sessions.length > 0
                         ? `${dashboardData.ongoing_live_sessions.length} active session${dashboardData.ongoing_live_sessions.length > 1 ? 's' : ''}`
                         : 'No active sessions'}
@@ -419,11 +417,11 @@ export default function TeacherDashboard() {
               {dashboardData.ongoing_live_sessions && dashboardData.ongoing_live_sessions.length > 0 ? (
                 <div className="space-y-4">
                   {dashboardData.ongoing_live_sessions.map((session) => (
-                    <div key={session?.id} className="p-4 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-emerald-300 dark:hover:border-emerald-700 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all">
+                    <div key={session?.id} className="p-4 rounded-lg border border-border hover:border-emerald-300 dark:hover:border-emerald-700 hover:bg-muted/50 transition-all">
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-3">
-                            <h4 className="font-semibold text-slate-900 dark:text-white truncate">{session?.title}</h4>
+                            <h4 className="font-semibold text-foreground truncate">{session?.title}</h4>
                             <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 text-xs font-medium">
                               <span className="relative flex h-1.5 w-1.5 mr-1.5">
                                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-75"></span>
@@ -432,7 +430,7 @@ export default function TeacherDashboard() {
                               Live
                             </span>
                           </div>
-                          <div className="flex flex-wrap gap-4 text-sm text-slate-600 dark:text-slate-400">
+                          <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
                             <div className="flex items-center gap-1.5">
                               <IconBook className="h-4 w-4" />
                               <span>{session?.class_title}</span>
@@ -466,8 +464,8 @@ export default function TeacherDashboard() {
                   <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-emerald-100 dark:bg-emerald-900/30 mb-3">
                     <IconVideo className="h-7 w-7 text-emerald-400 dark:text-emerald-500" />
                   </div>
-                  <h3 className="text-base font-semibold text-slate-900 dark:text-white mb-1">No Active Sessions</h3>
-                  <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">Start a session to see it here.</p>
+                  <h3 className="text-base font-semibold text-foreground mb-1">No Active Sessions</h3>
+                  <p className="text-sm text-muted-foreground mb-4">Start a session to see it here.</p>
                   <Button 
                     variant="outline" 
                     size="sm"
@@ -482,16 +480,16 @@ export default function TeacherDashboard() {
           </Card>
 
           {/* Upcoming Sessions */}
-          <Card className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 overflow-hidden">
-            <CardHeader className="bg-slate-50 dark:bg-slate-900/50 border-b border-slate-100 dark:border-slate-800 px-6 py-4">
+          <Card className="bg-card border border-border overflow-hidden">
+            <CardHeader className="bg-muted/50 border-b border-border px-6 py-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="h-11 w-11 rounded-lg bg-blue-500 flex items-center justify-center shadow-sm">
                     <IconCalendarEvent className="h-6 w-6 text-white" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-bold text-slate-900 dark:text-white">Upcoming Sessions</h3>
-                    <p className="text-sm text-slate-600 dark:text-slate-400">
+                    <h3 className="text-lg font-bold text-foreground">Upcoming Sessions</h3>
+                    <p className="text-sm text-muted-foreground">
                       {dashboardData.upcoming_sessions && dashboardData.upcoming_sessions.length > 0 
                         ? `${dashboardData.upcoming_sessions.length} scheduled session${dashboardData.upcoming_sessions.length > 1 ? 's' : ''}`
                         : 'No sessions scheduled'}
@@ -513,11 +511,11 @@ export default function TeacherDashboard() {
               {dashboardData.upcoming_sessions && dashboardData.upcoming_sessions.length > 0 ? (
                 <div className="space-y-4">
                   {dashboardData.upcoming_sessions.map((session) => (
-                    <div key={session?.id} className="p-4 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-700 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all">
+                    <div key={session?.id} className="p-4 rounded-lg border border-border hover:border-blue-300 dark:hover:border-blue-700 hover:bg-muted/50 transition-all">
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex-1 min-w-0">
-                          <h4 className="font-semibold text-slate-900 dark:text-white mb-3 truncate">{session?.title}</h4>
-                          <div className="flex flex-wrap gap-4 text-sm text-slate-600 dark:text-slate-400 mb-3">
+                          <h4 className="font-semibold text-foreground mb-3 truncate">{session?.title}</h4>
+                          <div className="flex flex-wrap gap-4 text-sm text-muted-foreground mb-3">
                             <div className="flex items-center gap-1.5">
                               <IconBook className="h-4 w-4" />
                               <span>{session?.class_title}</span>
@@ -543,16 +541,15 @@ export default function TeacherDashboard() {
                 </div>
               ) : (
                 <div className="p-12 text-center">
-                  <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-slate-100 dark:bg-slate-800 mb-3">
-                    <IconCalendarEvent className="h-7 w-7 text-slate-400 dark:text-slate-500" />
+                  <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-muted mb-3">
+                    <IconCalendarEvent className="h-7 w-7 text-muted-foreground" />
                   </div>
-                  <h3 className="text-base font-semibold text-slate-900 dark:text-white mb-1">No Sessions Scheduled</h3>
-                  <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">Schedule sessions to see them here.</p>
+                  <h3 className="text-base font-semibold text-foreground mb-1">No Sessions Scheduled</h3>
+                  <p className="text-sm text-muted-foreground mb-4">Schedule sessions to see them here.</p>
                   <Button 
                     variant="outline" 
                     size="sm"
                     onClick={() => router.push('/dashboard/teacher/sessions')}
-                    className="border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
                   >
                     Manage Sessions
                   </Button>
@@ -571,7 +568,7 @@ function MetricCard({ title, value, change, subtitle, icon: Icon, iconColor, bgC
   const isPositive = change >= 0;
   
   return (
-    <Card className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:shadow-lg transition-all duration-200">
+    <Card className="bg-card border border-border hover:shadow-lg transition-all duration-200">
       <CardContent className="p-6">
         <div className="flex items-center justify-between mb-4">
           <div className={`h-12 w-12 rounded-xl ${bgColor} flex items-center justify-center shadow-sm`}>
@@ -589,9 +586,9 @@ function MetricCard({ title, value, change, subtitle, icon: Icon, iconColor, bgC
           </div>
         </div>
         <div>
-          <p className="text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">{title}</p>
-          <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-1">{value}</h3>
-          <p className="text-xs text-slate-500 dark:text-slate-400">{subtitle}</p>
+          <p className="text-sm font-medium text-muted-foreground mb-1">{title}</p>
+          <h3 className="text-2xl font-bold text-foreground mb-1">{value}</h3>
+          <p className="text-xs text-muted-foreground">{subtitle}</p>
         </div>
       </CardContent>
     </Card>

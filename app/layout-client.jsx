@@ -21,7 +21,12 @@ import Footer from "@/components/footer";
 
 function AppLayout({ children }) {
   const pathname = usePathname();
-  const isAuthPage = pathname === "/login" || pathname === "/signup";
+  const isAuthPage = pathname === "/login" 
+    || pathname === "/signup" 
+    || pathname === "/check-email"
+    || pathname === "/resend-verification"
+    || pathname?.startsWith("/verify-email/")
+    || pathname?.startsWith("/reset-password/");
   const isLiveSessionPage = pathname?.includes("/sessions/") && pathname?.endsWith("/join");
   const isStudentHomepage = pathname === "/";
   const { userData } = useContext(AuthContext);

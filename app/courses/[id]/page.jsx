@@ -1023,6 +1023,76 @@ export default function CourseDetailsPage() {
                   </CardContent>
                 </Card>
               )}
+
+              {/* 📱 MOBILE: Continue Learning Section for Enrolled Students - In Hero Section */}
+              {isEnrolled && (
+                <Card className="lg:hidden shadow-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
+                  <CardContent className="p-4 space-y-4">
+                    {/* Enrolled Status Header */}
+                    <div className="flex items-center gap-3 pb-3 border-b border-gray-200 dark:border-gray-700">
+                      <div className="p-2 bg-green-500 rounded-xl">
+                        <IconCircleCheck className="h-5 w-5 text-white" />
+                      </div>
+                      <div>
+                        <div className="font-bold text-lg text-gray-900 dark:text-white">You're Enrolled</div>
+                        <div className="text-xs text-gray-600 dark:text-gray-400">Active Student</div>
+                      </div>
+                    </div>
+
+                    {/* Continue Learning Button */}
+                    <Button asChild className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-base rounded-xl shadow-md">
+                      <Link href={`/courses/${courseId}/sessions`}>
+                        <IconVideo className="h-4 w-4 mr-2" />
+                        Continue Learning
+                      </Link>
+                    </Button>
+
+                    {/* Quick Access Links */}
+                    <div className="space-y-2 pt-2">
+                      <Link href={`/courses/${courseId}/sessions`} className="flex items-center justify-between p-3 rounded-xl border border-gray-200 dark:border-gray-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all">
+                        <div className="flex items-center gap-2">
+                          <div className="p-1.5 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                            <IconVideo className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
+                          </div>
+                          <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">All Sessions</span>
+                        </div>
+                        <IconChevronRight className="h-4 w-4 text-gray-400" />
+                      </Link>
+
+                      <Link href={`/courses/${courseId}/recordings`} className="flex items-center justify-between p-3 rounded-xl border border-gray-200 dark:border-gray-700 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-all">
+                        <div className="flex items-center gap-2">
+                          <div className="p-1.5 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
+                            <IconPlayerPlay className="h-3.5 w-3.5 text-purple-600 dark:text-purple-400" />
+                          </div>
+                          <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Recordings</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <span className="text-xs font-bold text-purple-600 dark:text-purple-400">{lastRecordings.length}</span>
+                          <IconChevronRight className="h-4 w-4 text-gray-400" />
+                        </div>
+                      </Link>
+
+                      <Link href={`/courses/${courseId}/attendance`} className="flex items-center justify-between p-3 rounded-xl border border-gray-200 dark:border-gray-700 hover:bg-green-50 dark:hover:bg-green-900/20 transition-all">
+                        <div className="flex items-center gap-2">
+                          <div className="p-1.5 bg-green-100 dark:bg-green-900/30 rounded-lg">
+                            <IconCalendar className="h-3.5 w-3.5 text-green-600 dark:text-green-400" />
+                          </div>
+                          <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Attendance</span>
+                        </div>
+                        <IconChevronRight className="h-4 w-4 text-gray-400" />
+                      </Link>
+                    </div>
+
+                    {/* Certificate Button if available */}
+                    {certificates.length > 0 && (
+                      <Button variant="outline" className="w-full h-10 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 font-semibold text-sm rounded-xl">
+                        <IconCertificate className="h-4 w-4 mr-2 text-amber-600" />
+                        View Certificate
+                      </Button>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
             </div>
 
             {/* Right: Sticky Enrollment Card (Desktop) */}
@@ -1549,36 +1619,76 @@ export default function CourseDetailsPage() {
         <div className="container mx-auto px-4 py-3">
           <div className="flex items-center justify-between gap-4">
             <div className="flex-1 min-w-0">
-              <p className="font-bold text-lg truncate">
-                {hasPrice ? `$${course.price}` : 'Free'}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                {isFull ? 'Course Full' : `${seatsLeft} seats left`}
-              </p>
-            </div>
-            <Button 
-              size="lg" 
-              className="shrink-0 font-bold"
-              onClick={handleEnroll}
-              disabled={isFull}
-            >
-              {isFull ? (
-                <>
-                  <IconCircleX className="h-5 w-5 mr-2" />
-                  Full
-                </>
-              ) : isEnrolled ? (
-                <>
-                  <IconVideo className="h-5 w-5 mr-2" />
-                  Go to Course
-                </>
+              {isEnrolled ? (
+                /* Useful info for enrolled users */
+                <div className="space-y-0.5">
+                  {/* Attendance Percentage */}
+                  <div className="flex items-center gap-2">
+                    <div className="p-1 bg-green-100 dark:bg-green-900/30 rounded">
+                      <IconCircleCheck className="h-3 w-3 text-green-600 dark:text-green-400" />
+                    </div>
+                    <p className="font-bold text-base text-foreground truncate">
+                      {studentStats?.attendancePercentage || attendanceRate}% Attendance
+                    </p>
+                  </div>
+                  {/* Next Session or Time Spent */}
+                  {nextSession ? (
+                    <p className="text-xs text-muted-foreground truncate">
+                      Next: {nextSession.daysAway === 0 ? 'Today' : nextSession.daysAway === 1 ? 'Tomorrow' : `${nextSession.daysAway}d`} • {nextSession.start_time}
+                    </p>
+                  ) : studentStats?.totalHours ? (
+                    <p className="text-xs text-muted-foreground truncate">
+                      {studentStats.totalHours}h learned
+                    </p>
+                  ) : (
+                    <p className="text-xs text-muted-foreground truncate">
+                      Active Student
+                    </p>
+                  )}
+                </div>
               ) : (
+                /* Price and seats for non-enrolled users */
                 <>
-                  <IconCircleCheck className="h-5 w-5 mr-2" />
-                  Enroll Now
+                  <p className="font-bold text-lg truncate">
+                    {hasPrice ? `$${course.price}` : 'Free'}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {isFull ? 'Course Full' : `${seatsLeft} seats left`}
+                  </p>
                 </>
               )}
-            </Button>
+            </div>
+            {isEnrolled ? (
+              <Button 
+                size="lg" 
+                className="shrink-0 font-bold"
+                asChild
+              >
+                <Link href={`/courses/${courseId}/sessions`}>
+                  <IconVideo className="h-5 w-5 mr-2" />
+                  Continue Learning
+                </Link>
+              </Button>
+            ) : (
+              <Button 
+                size="lg" 
+                className="shrink-0 font-bold"
+                onClick={handleEnroll}
+                disabled={isFull}
+              >
+                {isFull ? (
+                  <>
+                    <IconCircleX className="h-5 w-5 mr-2" />
+                    Full
+                  </>
+                ) : (
+                  <>
+                    <IconCircleCheck className="h-5 w-5 mr-2" />
+                    Enroll Now
+                  </>
+                )}
+              </Button>
+            )}
           </div>
         </div>
       </div>
@@ -1628,17 +1738,25 @@ function EnrollmentCard({
             </div>
           </div>
 
-          {/* Stats Mini Grid */}
+          {/* Course Image */}
           <CardContent className="p-4 space-y-4">
-            <div className="grid grid-cols-2 gap-3">
-              <div className="text-center p-3 bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-gray-200 dark:border-gray-700">
-                <div className="text-2xl font-black text-green-600 dark:text-green-400">{studentStats?.attendancePercentage || attendanceRate}%</div>
-                <div className="text-[10px] font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wide mt-1">Attendance</div>
-              </div>
-              <div className="text-center p-3 bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-gray-200 dark:border-gray-700">
-                <div className="text-2xl font-black text-blue-600 dark:text-blue-400">{studentStats?.totalHours || 0}h</div>
-                <div className="text-[10px] font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wide mt-1">Time</div>
-              </div>
+            <div className="relative h-48 bg-gradient-to-br from-blue-600 via-purple-600 to-pink-600 rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700">
+              {course?.cover_image ? (
+                <img 
+                  src={getMediaUrl(course.cover_image)}
+                  alt={course?.title || 'Course image'}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    e.target.style.display = 'none';
+                  }}
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-600 via-purple-600 to-pink-600">
+                  <div className="text-white text-4xl font-bold opacity-50">
+                    {course?.title?.charAt(0) || '📚'}
+                  </div>
+                </div>
+              )}
             </div>
 
             <Button asChild className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-base rounded-xl shadow-md hover:shadow-lg transition-all">

@@ -51,6 +51,7 @@ export default function ResourceDetailPage() {
   const contentRef = useRef(null)
   
   const [downloadTriggered, setDownloadTriggered] = useState(false)
+  const [readTriggered, setReadTriggered] = useState(false)
 
   const redirectToAuth = useCallback((actionType, actionData, destination = 'login') => {
     if (actionType && actionData) {
@@ -110,7 +111,21 @@ export default function ResourceDetailPage() {
         router.replace(`/library/${resourceId}`, { scroll: false })
       }, 500)
     }
-  }, [searchParams, userData, resource, downloadTriggered])
+  }, [searchParams, userData, resource, downloadTriggered, router, resourceId])
+
+  // 🔐 Auto-read after successful login
+  useEffect(() => {
+    const autoRead = searchParams.get('autoRead')
+    if (autoRead === 'true' && userData && resource && !readTriggered) {
+      setReadTriggered(true)
+      // Small delay to ensure everything is loaded
+      setTimeout(() => {
+        handleRead()
+        // Clear the URL parameter
+        router.replace(`/library/${resourceId}`, { scroll: false })
+      }, 500)
+    }
+  }, [searchParams, userData, resource, readTriggered, router, resourceId])
 
   const fetchResource = async () => {
     setLoading(true)
@@ -154,6 +169,27 @@ export default function ResourceDetailPage() {
     } finally {
       setBookmarkLoading(false)
     }
+  }
+
+  const handleRead = () => {
+    // 🔐 Check if user is authenticated
+    if (!userData) {
+      toast.info('Please log in to read this resource')
+      redirectToAuth('read_book', {
+        resourceId: resourceId,
+        resourceTitle: resource?.title || 'Unknown'
+      }, 'login')
+      return
+    }
+
+    // Check if PDF file URL exists
+    if (!resource?.pdf_file_url) {
+      toast.error('No PDF file available for this resource')
+      return
+    }
+
+    // Open PDF in new tab
+    window.open(resource.pdf_file_url, '_blank')
   }
 
   const handleDownload = async () => {
@@ -572,7 +608,7 @@ export default function ResourceDetailPage() {
                   {/* Primary Action Buttons */}
                   <div className="space-y-3">
                     <Button
-                      onClick={() => window.open(resource.pdf_file_url, '_blank')}
+                      onClick={handleRead}
                       size="lg"
                       className="w-full bg-primary hover:bg-primary/90 text-white font-bold shadow-lg"
                     >

@@ -4,7 +4,7 @@ import { Loader2, BookOpen, GraduationCap, Sparkles } from 'lucide-react';
 
 export default function Loading() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center px-4 py-8">
+    <div className="min-h-screen bg-background flex items-center justify-center px-4 py-8">
       <div className="text-center space-y-8">
         {/* Main loader */}
         <div className="relative inline-block">
@@ -29,10 +29,10 @@ export default function Loading() {
 
         {/* Loading text */}
         <div className="space-y-3">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+          <h2 className="text-2xl font-bold text-foreground">
             Loading...
           </h2>
-          <p className="text-gray-600 dark:text-gray-400">
+          <p className="text-muted-foreground">
             Preparing your learning experience
           </p>
         </div>

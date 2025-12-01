@@ -14,10 +14,10 @@ import {
 } from '@tabler/icons-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 // import RichTextEditor from '@/components/blog/RichTextEditor'
 import RichTextEditor from '@/components/blog/RichTextEditor'
+import BlogContentRenderer from '@/components/blog/BlogContentRenderer'
 import ImageUpload from '@/components/blog/ImageUpload'
 import TagInput from '@/components/blog/TagInput'
 import { Switch } from '@/components/ui/switch'
@@ -31,7 +31,6 @@ const formSchema = z.object({
   slug: z.string().min(1, 'Slug is required'),
   body: z.string().min(1, 'Content is required'),
   featured_image: z.any().optional(),
-  meta_description: z.string().max(160, 'Meta description must be 160 characters or less').optional(),
   tags: z.array(z.string()).optional(),
   status: z.enum(['draft', 'published']).default('draft'),
 })
@@ -48,7 +47,6 @@ export default function CreateBlogPostPage() {
       title: '',
       slug: '',
       body: '',
-      meta_description: '',
       tags: [],
       status: 'draft',
     }
@@ -96,11 +94,6 @@ export default function CreateBlogPostPage() {
       // Add the current user as the author
       if (userData && userData.id) {
         formData.append('author', userData.id)
-      }
-      
-      // Add meta description if it exists
-      if (values.meta_description) {
-        formData.append('meta_description', values.meta_description)
       }
       
       // Add tags if they exist
@@ -237,9 +230,9 @@ export default function CreateBlogPostPage() {
               {previewMode ? (
                 <div className="border rounded-lg p-6">
                   <h2 className="text-2xl font-bold mb-4">Preview</h2>
-                  <div 
+                  <BlogContentRenderer 
+                    html={form.watch('body')}
                     className="prose max-w-none"
-                    dangerouslySetInnerHTML={{ __html: form.watch('body') }}
                   />
                 </div>
               ) : (
@@ -315,27 +308,6 @@ export default function CreateBlogPostPage() {
                         onChange={field.onChange}
                       />
                     </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="meta_description"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Meta Description</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="Brief description for SEO..."
-                        className="resize-none"
-                        {...field}
-                      />
-                    </FormControl>
-                    <div className="text-sm text-muted-foreground">
-                      {field.value?.length || 0}/160 characters
-                    </div>
                     <FormMessage />
                   </FormItem>
                 )}

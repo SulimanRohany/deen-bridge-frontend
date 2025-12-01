@@ -5,7 +5,8 @@ import {
   IconBrandFacebook,
   IconBrandLinkedin,
   IconLink,
-  IconCopy
+  IconCopy,
+  IconShare
 } from '@tabler/icons-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -41,38 +42,43 @@ export default function SocialShare({ post }) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="sm">
-          Share
+        <Button 
+          variant="ghost" 
+          size="sm"
+          className="h-9 px-3 text-muted-foreground hover:text-foreground hover:bg-muted/50"
+        >
+          <IconShare className="h-4 w-4 mr-1.5" />
+          <span className="text-sm">Share</span>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
+      <DropdownMenuContent align="end" className="w-40">
         <DropdownMenuItem asChild>
-          <a href={shareLinks.twitter} target="_blank" rel="noopener noreferrer">
-            <IconBrandTwitter className="mr-2" />
+          <a href={shareLinks.twitter} target="_blank" rel="noopener noreferrer" className="cursor-pointer">
+            <IconBrandTwitter className="mr-2 h-4 w-4" />
             Twitter
           </a>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
-          <a href={shareLinks.facebook} target="_blank" rel="noopener noreferrer">
-            <IconBrandFacebook className="mr-2" />
+          <a href={shareLinks.facebook} target="_blank" rel="noopener noreferrer" className="cursor-pointer">
+            <IconBrandFacebook className="mr-2 h-4 w-4" />
             Facebook
           </a>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
-          <a href={shareLinks.linkedin} target="_blank" rel="noopener noreferrer">
-            <IconBrandLinkedin className="mr-2" />
+          <a href={shareLinks.linkedin} target="_blank" rel="noopener noreferrer" className="cursor-pointer">
+            <IconBrandLinkedin className="mr-2 h-4 w-4" />
             LinkedIn
           </a>
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={copyToClipboard}>
+        <DropdownMenuItem onClick={copyToClipboard} className="cursor-pointer">
           {copied ? (
             <>
-              <IconCopy className="mr-2" />
+              <IconCopy className="mr-2 h-4 w-4" />
               Copied!
             </>
           ) : (
             <>
-              <IconLink className="mr-2" />
+              <IconLink className="mr-2 h-4 w-4" />
               Copy Link
             </>
           )}

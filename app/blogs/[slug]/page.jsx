@@ -1,31 +1,38 @@
 // app/blog/[slug]/page.jsx
 'use client'
-import { useState, useEffect, use } from 'react'
+import { useState, useEffect, use, useContext } from 'react'
 import { notFound } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
 import { blogAPI } from '@/lib/api'
 import { 
-  IconCalendar, 
-  IconUser, 
   IconTags, 
   IconArrowLeft,
-  IconShare
+  IconShare,
+  IconHeart,
+  IconHeartFilled
 } from '@tabler/icons-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import CommentSection from '@/components/blog/CommentSection'
 import SocialShare from '@/components/blog/SocialShare'
-import BlogPostCard from '@/components/blog/BlogPostCard'
+import RelatedArticleCard from '@/components/blog/RelatedArticleCard'
+import BlogContentRenderer from '@/components/blog/BlogContentRenderer'
 import { StructuredData } from '@/components/seo/structured-data'
+import AuthContext from '@/context/AuthContext'
+import { toast } from 'sonner'
 
 export default function BlogPostPage({ params }) {
   // Unwrap the params Promise using React.use()
   const { slug } = use(params)
+  const { userData } = useContext(AuthContext)
   
   const [post, setPost] = useState(null)
   const [loading, setLoading] = useState(true)
   const [relatedPosts, setRelatedPosts] = useState([])
+  const [isLiked, setIsLiked] = useState(false)
+  const [likesCount, setLikesCount] = useState(0)
+  const [isLiking, setIsLiking] = useState(false)
 
   useEffect(() => {
     const fetchPost = async () => {
@@ -33,16 +40,15 @@ export default function BlogPostPage({ params }) {
         setLoading(true)
         const response = await blogAPI.getPostBySlug(slug)
         setPost(response.data)
+        setIsLiked(response.data.is_liked || false)
+        setLikesCount(response.data.likes_count || 0)
         
-        // Fetch related posts
-        if (response.data.tags && response.data.tags.length > 0) {
+        // Fetch related posts using the new API endpoint
           try {
-            const tagResponse = await blogAPI.getPosts({ tag: response.data.tags[0], limit: 3 })
-            setRelatedPosts(tagResponse.data.filter(p => p.id !== response.data.id))
-          } catch (tagError) {
-            setRelatedPosts([])
-          }
-        } else {
+          const relatedResponse = await blogAPI.getRelatedPosts(slug)
+          setRelatedPosts(relatedResponse.data || [])
+        } catch (relatedError) {
+          // If related posts fetch fails, just show empty state
           setRelatedPosts([])
         }
       } catch (error) {
@@ -55,18 +61,53 @@ export default function BlogPostPage({ params }) {
     fetchPost()
   }, [slug])
 
+  const handleLikeToggle = async () => {
+    if (!userData) {
+      toast.error('Please log in to like posts')
+      return
+    }
+
+    if (isLiking || !post) return
+
+    // Optimistic update
+    const previousLiked = isLiked
+    const previousCount = likesCount
+    setIsLiked(!isLiked)
+    setLikesCount(prev => previousLiked ? prev - 1 : prev + 1)
+    setIsLiking(true)
+
+    try {
+      const response = await blogAPI.togglePostLike(post.id)
+      setIsLiked(response.data.is_liked)
+      setLikesCount(response.data.likes_count)
+      // Update post state
+      setPost(prev => ({ ...prev, is_liked: response.data.is_liked, likes_count: response.data.likes_count }))
+    } catch (error) {
+      // Rollback on error
+      setIsLiked(previousLiked)
+      setLikesCount(previousCount)
+      if (error.response?.status === 401) {
+        toast.error('Please log in to like posts')
+      } else {
+        toast.error('Failed to update like. Please try again.')
+      }
+    } finally {
+      setIsLiking(false)
+    }
+  }
+
   if (loading) {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
           <div className="animate-pulse">
-            <div className="h-8 bg-gray-200 rounded w-1/4 mb-4"></div>
-            <div className="h-12 bg-gray-200 rounded w-3/4 mb-6"></div>
-            <div className="h-96 bg-gray-200 rounded mb-6"></div>
+            <div className="h-8 bg-muted rounded w-1/4 mb-4"></div>
+            <div className="h-12 bg-muted rounded w-3/4 mb-6"></div>
+            <div className="h-96 bg-muted rounded mb-6"></div>
             <div className="space-y-3">
-              <div className="h-4 bg-gray-200 rounded w-full"></div>
-              <div className="h-4 bg-gray-200 rounded w-full"></div>
-              <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+              <div className="h-4 bg-muted rounded w-full"></div>
+              <div className="h-4 bg-muted rounded w-full"></div>
+              <div className="h-4 bg-muted rounded w-3/4"></div>
             </div>
           </div>
         </div>
@@ -87,7 +128,7 @@ export default function BlogPostPage({ params }) {
   }
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-900">
+    <div className="min-h-screen bg-background">
       {/* Structured Data for SEO */}
       {post && <StructuredData type="blogPost" data={post} />}
       {post && (
@@ -101,69 +142,72 @@ export default function BlogPostPage({ params }) {
         />
       )}
       
-      {/* Simple Header */}
-      <div className="border-b border-gray-200 dark:border-gray-800">
-        <div className="container mx-auto px-4 py-4 max-w-4xl">
-          <Button asChild variant="ghost" size="sm">
-            <Link href="/blogs" className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">
-              <IconArrowLeft className="h-4 w-4" />
-              Back to Articles
-            </Link>
-          </Button>
-        </div>
-      </div>
-
-      <div className="container mx-auto px-4 py-12 max-w-4xl">
+      <div className="container mx-auto px-4 py-16 max-w-3xl">
         <article>
+          {/* Back Navigation */}
+          <div className="mb-12">
+            <Link 
+              href="/blogs" 
+              className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors group"
+            >
+              <IconArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
+              <span>Back to Articles</span>
+            </Link>
+          </div>
+
           {/* Article Header */}
-          <header className="mb-12">
-            {/* Tags */}
-            {post.tags && post.tags.length > 0 && (
-              <div className="flex gap-2 mb-6">
-                {post.tags.map((tag, index) => (
-                  <Link key={index} href={`/blogs?tag=${tag}`}>
-                    <Badge variant="secondary" className="text-xs font-medium">
-                      {tag}
-                    </Badge>
-                  </Link>
-                ))}
-              </div>
-            )}
-            
+          <header className="mb-16">
             {/* Title */}
-            <h1 className="text-4xl lg:text-5xl font-bold mb-8 text-gray-900 dark:text-white leading-tight">
+            <h1 className="text-5xl lg:text-6xl font-bold mb-10 text-foreground leading-[1.1] tracking-tight">
               {post.title}
             </h1>
             
             {/* Author & Meta Info */}
-            <div className="flex items-center justify-between pb-8 border-b border-gray-200 dark:border-gray-800">
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center text-gray-700 dark:text-gray-300 font-semibold">
+            <div className="flex items-center justify-between pb-6 border-b border-border/50">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 bg-gradient-to-br from-muted to-muted/60 rounded-full flex items-center justify-center text-foreground font-medium text-sm shadow-sm">
                   {(post.author_data?.full_name || 'U')[0].toUpperCase()}
                 </div>
-                <div>
-                  <p className="font-medium text-gray-900 dark:text-white text-sm">
+                <div className="flex flex-col">
+                  <p className="font-medium text-foreground text-sm leading-none mb-1">
                     {post.author_data?.full_name || 'Unknown Author'}
                   </p>
-                  <div className="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
-                    <span>{formatDate(post.published_at || post.created_at)}</span>
-                    {post.views && post.views > 0 && (
-                      <>
-                        <span>•</span>
-                        <span>{post.views > 1000 ? `${(post.views / 1000).toFixed(1)}K` : post.views} views</span>
-                      </>
-                    )}
-                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {formatDate(post.published_at || post.created_at)}
+                  </p>
                 </div>
               </div>
               
-              <SocialShare post={post} />
+              <div className="flex items-center gap-4">
+                {/* Like Button */}
+                {userData ? (
+                  <button
+                    onClick={handleLikeToggle}
+                    disabled={isLiking}
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-muted transition-colors disabled:opacity-50"
+                    aria-label={isLiked ? 'Unlike this post' : 'Like this post'}
+                  >
+                    {isLiked ? (
+                      <IconHeartFilled className="h-5 w-5 text-red-500" />
+                    ) : (
+                      <IconHeart className="h-5 w-5" />
+                    )}
+                    <span className="text-sm font-medium">{likesCount}</span>
+                  </button>
+                ) : (
+                  <div className="flex items-center gap-2 px-4 py-2 text-muted-foreground">
+                    <IconHeart className="h-5 w-5" />
+                    <span className="text-sm font-medium">{likesCount}</span>
+                  </div>
+                )}
+                <SocialShare post={post} />
+              </div>
             </div>
           </header>
 
           {/* Featured Image */}
           {post.featured_image && (
-            <div className="relative h-[400px] lg:h-[500px] w-full mb-12 rounded-lg overflow-hidden">
+            <div className="relative h-[450px] lg:h-[550px] w-full mb-16 rounded-lg overflow-hidden shadow-sm">
               <Image
                 src={post.featured_image}
                 alt={post.title}
@@ -175,33 +219,33 @@ export default function BlogPostPage({ params }) {
           )}
 
           {/* Article Content */}
-          <div className="mb-12">
-            <div 
+          <div className="mb-16">
+            <BlogContentRenderer 
+              html={post.body}
               className="prose prose-lg dark:prose-invert max-w-none
-                prose-headings:font-semibold prose-headings:text-gray-900 dark:prose-headings:text-white prose-headings:mb-4 prose-headings:mt-8
-                prose-p:text-gray-700 dark:prose-p:text-gray-300 prose-p:leading-relaxed prose-p:mb-6
+                prose-headings:font-semibold prose-headings:text-foreground prose-headings:mb-4 prose-headings:mt-8
+                prose-p:text-foreground prose-p:leading-relaxed prose-p:mb-6
                 prose-a:text-blue-600 dark:prose-a:text-blue-400 prose-a:font-medium hover:prose-a:underline
-                prose-strong:text-gray-900 dark:prose-strong:text-white prose-strong:font-semibold
-                prose-code:text-sm prose-code:text-blue-600 dark:prose-code:text-blue-400 prose-code:bg-gray-100 dark:prose-code:bg-gray-800 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:font-mono
-                prose-pre:bg-gray-100 dark:prose-pre:bg-gray-800 prose-pre:border prose-pre:border-gray-200 dark:prose-pre:border-gray-700
+                prose-strong:text-foreground prose-strong:font-semibold
+                prose-code:text-sm prose-code:text-blue-600 dark:prose-code:text-blue-400 prose-code:bg-muted prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:font-mono
+                prose-pre:bg-muted prose-pre:border prose-pre:border-border
                 prose-img:rounded-lg
-                prose-blockquote:border-l-2 prose-blockquote:border-gray-300 dark:prose-blockquote:border-gray-600 prose-blockquote:pl-4 prose-blockquote:italic prose-blockquote:text-gray-700 dark:prose-blockquote:text-gray-300
+                prose-blockquote:border-l-2 prose-blockquote:border-border prose-blockquote:pl-4 prose-blockquote:italic prose-blockquote:text-foreground
                 prose-ul:my-6 prose-ol:my-6
-                prose-li:text-gray-700 dark:prose-li:text-gray-300 prose-li:my-2"
-              dangerouslySetInnerHTML={{ __html: post.body }}
+                prose-li:text-foreground prose-li:my-2"
             />
           </div>
 
           {/* Article Footer */}
           {post.tags && post.tags.length > 0 && (
-            <footer className="pt-8 border-t border-gray-200 dark:border-gray-800">
-              <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+            <footer className="pt-8 border-t border-border">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <IconTags size={16} />
                 <span>Tags:</span>
                 <div className="flex gap-2 flex-wrap">
                   {post.tags.map((tag, index) => (
                     <Link key={index} href={`/blogs?tag=${tag}`}>
-                      <span className="hover:text-gray-900 dark:hover:text-white transition-colors">
+                      <span className="hover:text-foreground transition-colors">
                         #{tag}
                       </span>
                     </Link>
@@ -213,17 +257,17 @@ export default function BlogPostPage({ params }) {
         </article>
 
         {/* Comments Section */}
-        <div className="mt-16 pt-12 border-t border-gray-200 dark:border-gray-800">
+        <div className="mt-16 pt-12 border-t border-border">
           <CommentSection postId={post.id} comments={post.comments || []} />
         </div>
 
         {/* Related Articles */}
         {relatedPosts.length > 0 && (
-          <section className="mt-16 pt-12 border-t border-gray-200 dark:border-gray-800">
-            <h2 className="text-2xl font-bold mb-8 text-gray-900 dark:text-white">Related Articles</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <section className="mt-16 pt-12 border-t border-border">
+            <h2 className="text-2xl font-bold mb-8 text-foreground">Related Articles</h2>
+            <div className="grid grid-cols-1 gap-6">
               {relatedPosts.map((relatedPost) => (
-                <BlogPostCard key={relatedPost.id} post={relatedPost} />
+                <RelatedArticleCard key={relatedPost.id} post={relatedPost} />
               ))}
             </div>
           </section>
