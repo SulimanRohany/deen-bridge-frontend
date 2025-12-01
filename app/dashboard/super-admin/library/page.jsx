@@ -651,6 +651,21 @@ function ResourceDialog({ open, onOpenChange, resource, subjects, onSuccess }) {
 
       onSuccess()
     } catch (error) {
+      console.error('Error saving book:', error)
+      
+      // Handle timeout errors
+      if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
+        toast.error("Upload timeout. The file may be too large or your connection is slow. Please try again or use a smaller file.")
+        setSubmitting(false)
+        return
+      }
+      
+      // Handle network errors
+      if (error.message === 'Network Error' || !error.response) {
+        toast.error("Network error. Please check your connection and try again.")
+        setSubmitting(false)
+        return
+      }
       
       // Handle specific error messages
       if (error.response?.data) {
@@ -658,22 +673,32 @@ function ResourceDialog({ open, onOpenChange, resource, subjects, onSuccess }) {
         
         // Handle field-specific errors
         if (errorData.cover_image) {
-          toast.error(`Cover Image: ${errorData.cover_image[0]}`)
+          const errorMsg = Array.isArray(errorData.cover_image) ? errorData.cover_image[0] : errorData.cover_image
+          toast.error(`Cover Image: ${errorMsg}`)
         } else if (errorData.pdf_file) {
-          toast.error(`PDF File: ${errorData.pdf_file[0]}`)
+          const errorMsg = Array.isArray(errorData.pdf_file) ? errorData.pdf_file[0] : errorData.pdf_file
+          toast.error(`PDF File: ${errorMsg}`)
         } else if (errorData.detail || errorData.message) {
           toast.error(errorData.detail || errorData.message)
+        } else if (errorData.non_field_errors) {
+          const errorMsg = Array.isArray(errorData.non_field_errors) ? errorData.non_field_errors[0] : errorData.non_field_errors
+          toast.error(errorMsg)
         } else {
           // Show first error found
-          const firstError = Object.values(errorData)[0]
+          const firstErrorKey = Object.keys(errorData)[0]
+          const firstError = errorData[firstErrorKey]
           if (Array.isArray(firstError)) {
-            toast.error(firstError[0])
+            toast.error(`${firstErrorKey}: ${firstError[0]}`)
+          } else if (typeof firstError === 'object') {
+            toast.error(`${firstErrorKey}: ${JSON.stringify(firstError)}`)
           } else {
-            toast.error(String(firstError))
+            toast.error(`${firstErrorKey}: ${String(firstError)}`)
           }
         }
+      } else if (error.message) {
+        toast.error(`Error: ${error.message}`)
       } else {
-        toast.error("Failed to save book. Please try again.")
+        toast.error("Failed to save book. Please check the console for details.")
       }
     } finally {
       setSubmitting(false)
