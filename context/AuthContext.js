@@ -123,6 +123,9 @@ export const AuthProvider = ({ children }) => {
           if (pendingAction.type === 'download_book' && pendingAction.data?.resourceId) {
             router.push(`/library/${pendingAction.data.resourceId}?autoDownload=true`);
             return; // Don't do default redirect
+          } else if (pendingAction.type === 'read_book' && pendingAction.data?.resourceId) {
+            router.push(`/library/${pendingAction.data.resourceId}?autoRead=true`);
+            return; // Don't do default redirect
           } else if (pendingAction.type === 'quran_read' || pendingAction.type === 'quran_listen') {
             const { surah, verse } = pendingAction.data || {};
             router.push(`/quran?surah=${surah || 1}&verse=${verse || 1}`);
@@ -165,9 +168,9 @@ export const AuthProvider = ({ children }) => {
         // Clear any error messages on successful registration
         setMessage(null);
         
-        // Note: Don't clear pending action on registration
-        // It will be handled after they log in
-        router.push('/login');
+        // Redirect to check-email page with user's email
+        const userEmail = data.email.toLowerCase();
+        router.push(`/check-email?email=${encodeURIComponent(userEmail)}`);
       }
     } catch (error) {
       setMessage(extractErrorMessage(error));

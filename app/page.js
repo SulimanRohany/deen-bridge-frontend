@@ -987,13 +987,29 @@ function SessionCountdown({ session }) {
 }
 
 export default function Home() {
-  const { userData } = useContext(AuthContext)
+  const { userData, loading } = useContext(AuthContext)
   const router = useRouter()
   const [enrollments, setEnrollments] = useState([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState(null)
   const [scrollY, setScrollY] = useState(0)
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
+
+  // Redirect authenticated users based on their role
+  useEffect(() => {
+    // Wait for auth to finish loading before checking
+    if (loading) return
+    
+    // If user is authenticated, redirect based on role
+    if (userData?.role) {
+      if (userData.role === 'teacher') {
+        router.push('/dashboard/teacher')
+      } else if (userData.role === 'super_admin') {
+        router.push('/dashboard/super-admin')
+      }
+      // Students stay on the landing page (no redirect needed)
+    }
+  }, [userData, loading, router])
 
   // Parallax and mouse tracking
   useEffect(() => {

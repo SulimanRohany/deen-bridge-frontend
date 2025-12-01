@@ -587,3 +587,17 @@
   border-radius: 9999px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
+
+/* Rich Text Editor - Pseudo-elements that can't be done with Tailwind */
+.editor-content-wrapper .ProseMirror ::selection {
+  @apply bg-blue-500 text-white;
+}
+
+.editor-content-wrapper .ProseMirror ::-moz-selection {
+  @apply bg-blue-500 text-white;
+}
+
+.editor-content-wrapper .ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  @apply float-left text-gray-400 pointer-events-none h-0 italic;
+}

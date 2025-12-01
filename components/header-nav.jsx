@@ -583,12 +583,12 @@ export default function HeaderNav() {
             </nav>
 
             {/* Footer Section */}
-            {userData && (
               <div className="p-4 border-t border-border/40">
                 <div className="mb-4 flex items-center justify-between px-3">
                   <span className="text-sm font-medium text-foreground">Theme</span>
                   <ThemeToggle />
                 </div>
+              {userData && (
                 <Button 
                   variant="outline" 
                   className="w-full justify-start gap-3 h-12 text-destructive hover:text-destructive hover:bg-destructive/10"
@@ -600,8 +600,8 @@ export default function HeaderNav() {
                   <IconLogout className="h-5 w-5" />
                   <span className="font-medium">Log out</span>
                 </Button>
+              )}
               </div>
-            )}
           </div>
         </SheetContent>
       </Sheet>

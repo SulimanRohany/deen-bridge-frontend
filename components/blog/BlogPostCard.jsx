@@ -1,5 +1,6 @@
 // components/blog/BlogPostCard.jsx
 'use client'
+import { useState, useContext } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
@@ -15,11 +16,20 @@ import {
   ChevronRight,
   Star,
   TrendingUp,
-  Award
+  Award,
+  Heart
 } from 'lucide-react'
+import { IconHeart, IconHeartFilled } from '@tabler/icons-react'
 import { cn } from '@/lib/utils'
+import AuthContext from '@/context/AuthContext'
+import { blogAPI } from '@/lib/api'
+import { toast } from 'sonner'
 
 export default function BlogPostCard({ post, isAdmin = false, featured = false, viewMode = 'grid' }) {
+  const { userData } = useContext(AuthContext)
+  const [isLiked, setIsLiked] = useState(post.is_liked || false)
+  const [likesCount, setLikesCount] = useState(post.likes_count || 0)
+  const [isLiking, setIsLiking] = useState(false)
   const formatDate = (dateString) => {
     const date = new Date(dateString)
     const now = new Date()
@@ -64,6 +74,42 @@ export default function BlogPostCard({ post, isAdmin = false, featured = false, 
     const wordCount = text.split(/\s+/).length
     const minutes = Math.ceil(wordCount / wordsPerMinute)
     return minutes
+  }
+
+  const handleLikeToggle = async (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    
+    if (!userData) {
+      toast.error('Please log in to like posts')
+      return
+    }
+
+    if (isLiking) return
+
+    // Optimistic update
+    const previousLiked = isLiked
+    const previousCount = likesCount
+    setIsLiked(!isLiked)
+    setLikesCount(prev => previousLiked ? prev - 1 : prev + 1)
+    setIsLiking(true)
+
+    try {
+      const response = await blogAPI.togglePostLike(post.id)
+      setIsLiked(response.data.is_liked)
+      setLikesCount(response.data.likes_count)
+    } catch (error) {
+      // Rollback on error
+      setIsLiked(previousLiked)
+      setLikesCount(previousCount)
+      if (error.response?.status === 401) {
+        toast.error('Please log in to like posts')
+      } else {
+        toast.error('Failed to update like. Please try again.')
+      }
+    } finally {
+      setIsLiking(false)
+    }
   }
 
   if (viewMode === 'list') {
@@ -166,6 +212,27 @@ export default function BlogPostCard({ post, isAdmin = false, featured = false, 
             {/* Footer */}
             <div className="mt-auto flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
               <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
+                {userData && (
+                  <button
+                    onClick={handleLikeToggle}
+                    disabled={isLiking}
+                    className="flex items-center gap-1.5 hover:text-red-500 transition-colors disabled:opacity-50"
+                    aria-label={isLiked ? 'Unlike this post' : 'Like this post'}
+                  >
+                    {isLiked ? (
+                      <IconHeartFilled className="h-4 w-4 text-red-500" />
+                    ) : (
+                      <IconHeart className="h-4 w-4" />
+                    )}
+                    <span>{likesCount}</span>
+                  </button>
+                )}
+                {!userData && (
+                  <div className="flex items-center gap-1.5">
+                    <IconHeart className="h-4 w-4" />
+                    <span>{likesCount}</span>
+                  </div>
+                )}
                 <div className="flex items-center gap-1.5">
                   <MessageCircle className="h-4 w-4" />
                   <span>{post.comments_count || 0}</span>
@@ -284,6 +351,27 @@ export default function BlogPostCard({ post, isAdmin = false, featured = false, 
               <Eye className="h-3.5 w-3.5" />
               <span>{post.views ? (post.views > 1000 ? `${(post.views / 1000).toFixed(1)}K` : post.views) : '0'}</span>
             </div>
+            {userData && (
+              <button
+                onClick={handleLikeToggle}
+                disabled={isLiking}
+                className="flex items-center gap-1 hover:text-red-500 transition-colors disabled:opacity-50"
+                aria-label={isLiked ? 'Unlike this post' : 'Like this post'}
+              >
+                {isLiked ? (
+                  <IconHeartFilled className="h-3.5 w-3.5 text-red-500" />
+                ) : (
+                  <IconHeart className="h-3.5 w-3.5" />
+                )}
+                <span>{likesCount}</span>
+              </button>
+            )}
+            {!userData && (
+              <div className="flex items-center gap-1">
+                <IconHeart className="h-3.5 w-3.5" />
+                <span>{likesCount}</span>
+              </div>
+            )}
             <div className="flex items-center gap-1">
               <MessageCircle className="h-3.5 w-3.5" />
               <span>{post.comments_count || 0}</span>

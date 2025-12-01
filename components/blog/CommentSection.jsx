@@ -10,7 +10,9 @@ import {
   IconMessage,
   IconSend,
   IconTrash,
-  IconEdit
+  IconEdit,
+  IconHeart,
+  IconHeartFilled
 } from '@tabler/icons-react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
@@ -28,6 +30,7 @@ export default function CommentSection({ postId, comments: initialComments = [] 
   const [comments, setComments] = useState(initialComments)
   const [loading, setLoading] = useState(false)
   const [activeComment, setActiveComment] = useState(null) // { id: string, type: 'replying' | 'editing' }
+  const [likingComments, setLikingComments] = useState(new Set()) // Track which comments are being liked
   const { userData } = useContext(AuthContext)
   
   const form = useForm({
@@ -214,10 +217,88 @@ export default function CommentSection({ postId, comments: initialComments = [] 
     return true
   }
 
+  const handleCommentLike = async (commentId, e) => {
+    e.preventDefault()
+    e.stopPropagation()
+
+    if (!userData) {
+      toast.error('Please log in to like comments')
+      return
+    }
+
+    if (likingComments.has(commentId)) return
+
+    // Find the comment in the tree
+    const findComment = (comments, id) => {
+      for (const comment of comments) {
+        if (comment.id === id) return comment
+        if (comment.replies && comment.replies.length > 0) {
+          const found = findComment(comment.replies, id)
+          if (found) return found
+        }
+      }
+      return null
+    }
+
+    const comment = findComment(comments, commentId)
+    if (!comment) return
+
+    // Optimistic update
+    const previousLiked = comment.is_liked || false
+    const previousCount = comment.likes_count || 0
+    setLikingComments(prev => new Set(prev).add(commentId))
+
+    // Update comment in tree
+    const updateCommentInTree = (comments, commentId, updates) => {
+      return comments.map(comment => {
+        if (comment.id === commentId) {
+          return { ...comment, ...updates }
+        }
+        if (comment.replies && comment.replies.length > 0) {
+          return {
+            ...comment,
+            replies: updateCommentInTree(comment.replies, commentId, updates)
+          }
+        }
+        return comment
+      })
+    }
+
+    setComments(prev => updateCommentInTree(prev, commentId, {
+      is_liked: !previousLiked,
+      likes_count: previousLiked ? previousCount - 1 : previousCount + 1
+    }))
+
+    try {
+      const response = await blogAPI.toggleCommentLike(commentId)
+      setComments(prev => updateCommentInTree(prev, commentId, {
+        is_liked: response.data.is_liked,
+        likes_count: response.data.likes_count
+      }))
+    } catch (error) {
+      // Rollback on error
+      setComments(prev => updateCommentInTree(prev, commentId, {
+        is_liked: previousLiked,
+        likes_count: previousCount
+      }))
+      if (error.response?.status === 401) {
+        toast.error('Please log in to like comments')
+      } else {
+        toast.error('Failed to update like. Please try again.')
+      }
+    } finally {
+      setLikingComments(prev => {
+        const newSet = new Set(prev)
+        newSet.delete(commentId)
+        return newSet
+      })
+    }
+  }
+
   const renderComments = (comments, depth = 0) => {
     return comments.map((comment) => (
-      <div key={comment.id} className={`${depth > 0 ? 'ml-8 border-l-2 pl-4' : ''}`}>
-        <div className="bg-white rounded-lg p-4 shadow-sm mb-4">
+      <div key={comment.id} className={`${depth > 0 ? 'ml-8 border-l-2 border-border pl-4' : ''}`}>
+        <div className="bg-card rounded-lg p-4 shadow-sm mb-4 border border-border">
           <div className="flex items-start gap-3">
             <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
               <IconUser size={20} className="text-primary" />
@@ -225,7 +306,7 @@ export default function CommentSection({ postId, comments: initialComments = [] 
             <div className="flex-1">
               <div className="flex items-center justify-between mb-2">
                 <div>
-                  <h4 className="font-semibold">
+                  <h4 className="font-semibold text-foreground">
                     {comment.author_data?.full_name || comment.author_data?.email || 'Anonymous'}
                   </h4>
                   <span className="text-sm text-muted-foreground flex items-center gap-1">
@@ -299,19 +380,43 @@ export default function CommentSection({ postId, comments: initialComments = [] 
                 </Form>
               ) : (
                 <>
-                  <p className="text-gray-700 mb-3">{comment.body}</p>
+                  <p className="text-foreground mb-3">{comment.body}</p>
                   
-                  {userData && canReply(comment, depth) && (
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      onClick={() => startReplying(comment)}
-                      className="text-sm"
-                    >
-                      <IconMessage size={16} className="mr-1" />
-                      Reply
-                    </Button>
-                  )}
+                  <div className="flex items-center gap-3">
+                    {/* Like Button */}
+                    {userData ? (
+                      <button
+                        onClick={(e) => handleCommentLike(comment.id, e)}
+                        disabled={likingComments.has(comment.id)}
+                        className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-red-500 transition-colors disabled:opacity-50"
+                        aria-label={comment.is_liked ? 'Unlike this comment' : 'Like this comment'}
+                      >
+                        {comment.is_liked ? (
+                          <IconHeartFilled size={16} className="text-red-500" />
+                        ) : (
+                          <IconHeart size={16} />
+                        )}
+                        <span>{comment.likes_count || 0}</span>
+                      </button>
+                    ) : (
+                      <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                        <IconHeart size={16} />
+                        <span>{comment.likes_count || 0}</span>
+                      </div>
+                    )}
+                    
+                    {userData && canReply(comment, depth) && (
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => startReplying(comment)}
+                        className="text-sm"
+                      >
+                        <IconMessage size={16} className="mr-1" />
+                        Reply
+                      </Button>
+                    )}
+                  </div>
                 </>
               )}
             </div>
@@ -385,7 +490,7 @@ export default function CommentSection({ postId, comments: initialComments = [] 
 
   return (
     <div className="mt-8">
-      <h3 className="text-2xl font-bold mb-6 flex items-center gap-2">
+      <h3 className="text-2xl font-bold mb-6 flex items-center gap-2 text-foreground">
         <IconMessage />
         Comments ({totalComments})
       </h3>

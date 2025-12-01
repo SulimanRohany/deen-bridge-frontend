@@ -5,8 +5,6 @@ import { useSearchParams, useRouter } from 'next/navigation'
 import { blogAPI } from '@/lib/api'
 import { 
   Search,
-  LayoutGrid,
-  LayoutList,
   Tag,
   X
 } from 'lucide-react'
@@ -42,7 +40,6 @@ export default function BlogPage() {
   const [posts, setPosts] = useState([])
   const [featuredPosts, setFeaturedPosts] = useState([])
   const [loading, setLoading] = useState(true)
-  const [viewMode, setViewMode] = useState('grid')
   const [searchQuery, setSearchQuery] = useState('')
   const [sortBy, setSortBy] = useState('newest')
   const [selectedTag, setSelectedTag] = useState('')
@@ -151,46 +148,50 @@ export default function BlogPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      
-      {/* Simple Header */}
-      <div className="border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
-        <div className="container mx-auto px-4 py-8 max-w-7xl">
-          <div className="flex items-center justify-between mb-2">
+      {/* Elegant Header */}
+      <div className="border-b border-border/50">
+        <div className="container mx-auto px-4 py-12 max-w-6xl">
+          {/* Breadcrumb */}
+          <div className="mb-8">
             <Breadcrumb>
               <BreadcrumbList>
                 <BreadcrumbItem>
-                  <BreadcrumbLink href="/" className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">
+                  <BreadcrumbLink href="/" className="text-muted-foreground hover:text-foreground transition-colors text-sm">
                     Home
                   </BreadcrumbLink>
                 </BreadcrumbItem>
-                <BreadcrumbSeparator />
+                <BreadcrumbSeparator className="text-muted-foreground" />
                 <BreadcrumbItem>
-                  <BreadcrumbPage className="text-gray-900 dark:text-white">Blog</BreadcrumbPage>
+                  <BreadcrumbPage className="text-foreground text-sm">Blog</BreadcrumbPage>
                 </BreadcrumbItem>
               </BreadcrumbList>
             </Breadcrumb>
           </div>
           
-          <div className="flex items-center justify-between">
+          {/* Title & Stats */}
+          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
             <div>
-              <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-2">
+              <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-3 leading-tight tracking-tight">
                 Blog Articles
               </h1>
-              <p className="text-gray-600 dark:text-gray-400">
+              <p className="text-muted-foreground text-base">
                 Explore Islamic knowledge and insights
               </p>
             </div>
             
-            <div className="hidden md:flex items-center gap-6 text-sm">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-gray-900 dark:text-white">{stats.totalPosts}</div>
-                <div className="text-gray-600 dark:text-gray-400">Articles</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-gray-900 dark:text-white">
-                  {stats.totalViews > 1000 ? `${Math.floor(stats.totalViews / 1000)}K+` : stats.totalViews}
+            {/* Stats */}
+            <div className="flex items-center gap-8">
+              <div className="text-right">
+                <div className="text-2xl font-semibold text-foreground leading-none mb-1">
+                  {stats.totalPosts}
                 </div>
-                <div className="text-gray-600 dark:text-gray-400">Views</div>
+                <div className="text-xs text-muted-foreground uppercase tracking-wide">Articles</div>
+              </div>
+              <div className="text-right">
+                <div className="text-2xl font-semibold text-foreground leading-none mb-1">
+                  {stats.totalViews > 1000 ? `${(stats.totalViews / 1000).toFixed(1)}K` : stats.totalViews}
+                </div>
+                <div className="text-xs text-muted-foreground uppercase tracking-wide">Views</div>
               </div>
             </div>
           </div>
@@ -198,33 +199,33 @@ export default function BlogPage() {
       </div>
 
       {/* Main Content Area */}
-      <div className="container mx-auto px-4 py-8 max-w-7xl">
+      <div className="container mx-auto px-4 py-12 max-w-6xl">
 
         {/* Search & Controls Section */}
-        <div className="mb-8">
-          <div className="flex flex-col md:flex-row gap-4 mb-6">
+        <div className="mb-10">
+          <div className="flex flex-col md:flex-row gap-3 mb-6">
             {/* Search Bar */}
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-5 w-5" />
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" />
               <Input
                 placeholder="Search articles..."
                 value={searchQuery}
                 onChange={handleSearch}
-                className="pl-10 pr-10 h-11"
+                className="pl-10 pr-10 h-10 border-border/50 focus:border-border"
               />
               {searchQuery && (
                 <button
                   onClick={clearSearch}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-md hover:bg-muted transition-colors"
                 >
-                  <X className="h-4 w-4 text-gray-400" />
+                  <X className="h-3.5 w-3.5 text-muted-foreground" />
                 </button>
               )}
             </div>
 
             {/* Sort Dropdown */}
             <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className="w-full md:w-[200px] h-11">
+              <SelectTrigger className="w-full md:w-[180px] h-10 border-border/50">
                 <SelectValue placeholder="Sort by" />
               </SelectTrigger>
               <SelectContent>
@@ -235,50 +236,38 @@ export default function BlogPage() {
                 <SelectItem value="title-desc">Title (Z-A)</SelectItem>
               </SelectContent>
             </Select>
-
-            {/* View Mode Toggle */}
-            <div className="flex items-center gap-1 p-1 bg-gray-100 dark:bg-gray-800 rounded-lg">
-              <Button
-                variant={viewMode === 'grid' ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => setViewMode('grid')}
-                className="h-9 px-3"
-              >
-                <LayoutGrid className="h-4 w-4" />
-              </Button>
-              <Button
-                variant={viewMode === 'list' ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => setViewMode('list')}
-                className="h-9 px-3"
-              >
-                <LayoutList className="h-4 w-4" />
-              </Button>
-            </div>
           </div>
 
           {/* Active Filters & Results Count */}
-          <div className="flex items-center gap-3 flex-wrap">
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              <span className="font-semibold text-gray-900 dark:text-white">{filteredPosts.length}</span> articles
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <p className="text-sm text-muted-foreground">
+              <span className="font-medium text-foreground">{filteredPosts.length}</span> articles
             </p>
             {searchQuery && (
-              <Badge variant="secondary" className="gap-1">
+              <Badge variant="secondary" className="gap-1.5 text-xs font-normal px-2.5 py-0.5">
                 <Search className="h-3 w-3" />
                 &quot;{searchQuery}&quot;
+                <button
+                  onClick={clearSearch}
+                  className="ml-1 hover:text-foreground transition-colors"
+                >
+                  <X className="h-3 w-3" />
+                </button>
               </Badge>
             )}
             {selectedTag && (
-              <Badge variant="secondary" className="gap-1">
+              <Badge variant="secondary" className="gap-1.5 text-xs font-normal px-2.5 py-0.5">
                 <Tag className="h-3 w-3" />
                 {selectedTag}
-                <X
-                  className="h-3 w-3 cursor-pointer hover:text-destructive"
+                <button
                   onClick={() => {
                     setSelectedTag('')
                     router.push('/blogs')
                   }}
-                />
+                  className="ml-1 hover:text-foreground transition-colors"
+                >
+                  <X className="h-3 w-3" />
+                </button>
               </Badge>
             )}
           </div>
@@ -286,8 +275,8 @@ export default function BlogPage() {
 
         {/* Tags Section */}
         {!loading && allTags.length > 0 && (
-          <div className="mb-8">
-            <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Filter by Topic</h3>
+          <div className="mb-10">
+            <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-3">Filter by Topic</h3>
             <div className="flex flex-wrap gap-2">
               {allTags.slice(0, 12).map((tag) => (
                 <button
@@ -297,10 +286,10 @@ export default function BlogPage() {
                     router.push(`/blogs?tag=${tag}`)
                   }}
                   className={cn(
-                    "px-3 py-1.5 rounded-md text-sm font-medium transition-colors",
+                    "px-3 py-1.5 rounded-md text-sm font-medium transition-all",
                     selectedTag === tag
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
+                      ? "bg-foreground text-background shadow-sm"
+                      : "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground"
                   )}
                 >
                   {tag}
@@ -310,15 +299,12 @@ export default function BlogPage() {
           </div>
         )}
 
-        {/* Articles Grid */}
-        <div className="mb-8">
+        {/* Articles List */}
+        <div className="mb-12">
           {loading ? (
-            <div className={cn(
-              "grid gap-6",
-              viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1'
-            )}>
+            <div className="grid grid-cols-1 gap-6">
               {[...Array(6)].map((_, i) => (
-                <div key={i} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-white dark:bg-gray-800">
+                <div key={i} className="border border-border rounded-lg p-4 bg-card">
                   <Skeleton className="h-48 w-full mb-4 rounded" />
                   <Skeleton className="h-6 w-3/4 mb-2" />
                   <Skeleton className="h-4 w-full mb-2" />
@@ -327,25 +313,22 @@ export default function BlogPage() {
               ))}
             </div>
           ) : filteredPosts.length > 0 ? (
-            <div className={cn(
-              "grid gap-6",
-              viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1'
-            )}>
+            <div className="grid grid-cols-1 gap-6">
               {filteredPosts.map((post) => (
-                <BlogPostCard key={post.id} post={post} viewMode={viewMode} />
+                <BlogPostCard key={post.id} post={post} viewMode="list" />
               ))}
             </div>
           ) : (
-            <div className="text-center py-16">
-              <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Search className="h-8 w-8 text-gray-400" />
+            <div className="text-center py-20">
+              <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
+                <Search className="h-7 w-7 text-muted-foreground" />
               </div>
-              <h3 className="text-xl font-semibold mb-2 text-gray-900 dark:text-white">No articles found</h3>
-              <p className="text-gray-600 dark:text-gray-400 mb-6">
+              <h3 className="text-xl font-semibold mb-2 text-foreground">No articles found</h3>
+              <p className="text-muted-foreground mb-6 text-sm">
                 Try adjusting your search or filters
               </p>
               {(searchQuery || selectedTag) && (
-                <Button onClick={clearSearch} variant="outline">
+                <Button onClick={clearSearch} variant="outline" size="sm">
                   <X className="h-4 w-4 mr-2" />
                   Clear Filters
                 </Button>
