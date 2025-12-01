@@ -208,21 +208,51 @@ export default function ResourceDetailPage() {
       
       // Backend returns { message, pdf_url }
       if (response.data.pdf_url) {
-        // Fetch the PDF as a blob to force download
-        const pdfResponse = await fetch(response.data.pdf_url)
-        const blob = await pdfResponse.blob()
+        // Fetch the PDF with authentication to ensure download works
+        // This approach forces download instead of opening in browser
+        const pdfUrl = response.data.pdf_url
         
-        // Create a blob URL and download link
+        // Get auth token for authenticated requests
+        let authToken = null
+        if (typeof window !== 'undefined' && localStorage.getItem('authTokens')) {
+          try {
+            const tokens = JSON.parse(localStorage.getItem('authTokens'))
+            authToken = tokens.access
+          } catch (e) {
+            // Token parsing failed, continue without auth
+          }
+        }
+        
+        // Fetch PDF with proper headers
+        const pdfResponse = await fetch(pdfUrl, {
+          method: 'GET',
+          credentials: 'include',
+          headers: {
+            ...(authToken ? { 'Authorization': `Bearer ${authToken}` } : {})
+          }
+        })
+        
+        if (!pdfResponse.ok) {
+          throw new Error(`Failed to fetch PDF: ${pdfResponse.statusText}`)
+        }
+        
+        // Create blob from response - browser handles large files efficiently
+        const blob = await pdfResponse.blob()
         const blobUrl = window.URL.createObjectURL(blob)
+        
+        // Create download link
         const link = document.createElement('a')
         link.href = blobUrl
-        link.download = `${resource.title}.pdf`
+        link.download = `${resource.title || 'download'}.pdf`
+        link.style.display = 'none'
         document.body.appendChild(link)
         link.click()
-        document.body.removeChild(link)
         
-        // Clean up the blob URL
-        window.URL.revokeObjectURL(blobUrl)
+        // Clean up immediately to free memory (browser keeps blob for download)
+        setTimeout(() => {
+          document.body.removeChild(link)
+          window.URL.revokeObjectURL(blobUrl)
+        }, 100)
         
         toast.success('Download started successfully')
         
@@ -431,6 +461,131 @@ export default function ResourceDetailPage() {
                       </div>
                     </div>
                   )}
+                </div>
+
+                {/* Mobile Action Card - Shows on smaller screens */}
+                <div className="lg:hidden mt-6">
+                  <Card className="border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-2xl shadow-md overflow-hidden">
+                    {/* Resource Cover Image - Full Width */}
+                    <div className="relative h-64 bg-gradient-to-br from-blue-600 via-purple-600 to-pink-600 overflow-hidden">
+                      {resource.cover_image_url ? (
+                        <>
+                          <img 
+                            src={resource.cover_image_url}
+                            alt={resource.title}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              e.target.style.display = 'none';
+                            }}
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                        </>
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <div className="text-center p-6">
+                            <IconBook className="h-20 w-20 text-white/80 mx-auto mb-3" />
+                            <p className="text-white/80 font-medium text-lg">Resource Cover</p>
+                            <p className="text-white/60 text-sm">No image available</p>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* Featured Badge */}
+                      {resource.is_featured && (
+                        <div className="absolute top-4 right-4">
+                          <div className="bg-blue-600 text-white px-3 py-1.5 rounded-full font-bold text-sm shadow-lg">
+                            Featured
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* Format Badge */}
+                      <div className="absolute bottom-4 left-4">
+                        <div className="bg-white/90 dark:bg-gray-800/90 text-gray-900 dark:text-white px-3 py-1.5 rounded-full font-bold text-sm shadow-lg">
+                          PDF
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Action Buttons Section */}
+                    <div className="p-6 space-y-4 bg-gradient-to-b from-white to-slate-50 dark:from-gray-800 dark:to-gray-900">
+                      {/* Title */}
+                      <div className="text-center">
+                        <h3 className="text-xl font-bold text-gray-900 dark:text-white">Ready to Read?</h3>
+                        <p className="text-gray-600 dark:text-gray-400 text-sm mt-1">Access this valuable resource</p>
+                      </div>
+                      
+                      {/* Primary Action Buttons */}
+                      <div className="space-y-3">
+                        <Button
+                          onClick={handleRead}
+                          size="lg"
+                          className="w-full bg-primary hover:bg-primary/90 text-white font-bold shadow-lg"
+                        >
+                          <IconFileTypePdf className="h-5 w-5 mr-2" />
+                          Read Now
+                        </Button>
+                        
+                        <Button 
+                          onClick={handleDownload}
+                          variant="outline"
+                          size="lg"
+                          className="w-full border-2 border-primary text-primary hover:bg-primary hover:text-white font-semibold"
+                        >
+                          <IconDownload className="h-5 w-5 mr-2" />
+                          Download PDF
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* Quick Actions */}
+                    <CardContent className="p-6 space-y-4">
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={handleShare}
+                          className="flex-1 hover:bg-primary/10"
+                        >
+                          <IconShare className="h-4 w-4 mr-2" />
+                          Share
+                        </Button>
+                        
+                        <Button
+                          variant={isBookmarked ? "default" : "outline"}
+                          size="sm"
+                          onClick={handleBookmarkToggle}
+                          disabled={bookmarkLoading}
+                          className="flex-1 font-semibold"
+                        >
+                          {isBookmarked ? (
+                            <IconBookmarkFilled className="h-4 w-4 mr-2" />
+                          ) : (
+                            <IconBookmark className="h-4 w-4 mr-2" />
+                          )}
+                          {isBookmarked ? 'Saved' : 'Save'}
+                        </Button>
+                      </div>
+                      
+                      {/* Resource Stats */}
+                      <div className="space-y-3 pt-4 border-t">
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">Views</span>
+                          <span className="font-semibold">{resource.view_count || 0}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">Downloads</span>
+                          <span className="font-semibold">{resource.download_count || 0}</span>
+                        </div>
+                        {resource.average_rating > 0 && (
+                          <div className="flex justify-between text-sm">
+                            <span className="text-muted-foreground">Rating</span>
+                            <span className="font-semibold">{resource.average_rating.toFixed(1)} ⭐</span>
+                          </div>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
                 </div>
 
                 {/* Professional Feature Cards */}
