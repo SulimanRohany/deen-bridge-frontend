@@ -595,13 +595,13 @@ function ResourceDialog({ open, onOpenChange, resource, subjects, onSuccess }) {
 
     try {
       // Validate files before submission
-      if (coverImage && coverImage.size > 5 * 1024 * 1024) {
-        toast.error("Cover image must be less than 5MB")
+      if (coverImage && coverImage.size > 10 * 1024 * 1024) {
+        toast.error("Cover image must be less than 10MB")
         setSubmitting(false)
         return
       }
-      if (pdfFile && pdfFile.size > 50 * 1024 * 1024) {
-        toast.error("PDF file must be less than 50MB")
+      if (pdfFile && pdfFile.size > 100 * 1024 * 1024) {
+        toast.error("PDF file must be less than 100MB")
         setSubmitting(false)
         return
       }
