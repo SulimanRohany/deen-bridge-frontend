@@ -80,10 +80,10 @@ export default function Footer() {
             </h3>
             <ul className="space-y-3">
               <li>
-                <span className="text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-2 text-sm group cursor-pointer">
+                <Link href="/about" className="text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-2 text-sm group">
                   <span className="w-1 h-1 rounded-full bg-muted-foreground group-hover:bg-primary transition-colors" />
                   About Us
-                </span>
+                </Link>
               </li>
               <li>
                 <Link href="/courses" className="text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-2 text-sm group">

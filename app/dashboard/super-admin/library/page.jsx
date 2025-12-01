@@ -507,15 +507,10 @@ export default function LibraryManagementPage() {
 function ResourceDialog({ open, onOpenChange, resource, subjects, onSuccess }) {
   const [formData, setFormData] = useState({
     title: '',
-    title_arabic: '',
     author: '',
-    author_arabic: '',
-    category: '',
     language: 'arabic',
     description: '',
-    publisher: '',
     publication_year: '',
-    isbn: '',
     pages: '',
     is_published: true,
     is_featured: false,
@@ -523,39 +518,20 @@ function ResourceDialog({ open, onOpenChange, resource, subjects, onSuccess }) {
     tags: '',
     subject_ids: [],
   })
-  const [categories, setCategories] = useState([])
   const [coverImage, setCoverImage] = useState(null)
   const [pdfFile, setPdfFile] = useState(null)
   const [removeCoverImage, setRemoveCoverImage] = useState(false)
   const [removePdfFile, setRemovePdfFile] = useState(false)
   const [submitting, setSubmitting] = useState(false)
 
-  const fetchCategories = async () => {
-    try {
-      const response = await libraryAPI.getCategories()
-      setCategories(response.data || [])
-    } catch (error) {
-    }
-  }
-
   useEffect(() => {
-    // Fetch categories when dialog opens
-    if (open) {
-      fetchCategories()
-    }
-    
     if (resource) {
       setFormData({
         title: resource.title || '',
-        title_arabic: resource.title_arabic || '',
         author: resource.author || '',
-        author_arabic: resource.author_arabic || '',
-        category: resource.category || '',
         language: resource.language || 'arabic',
         description: resource.description || '',
-        publisher: resource.publisher || '',
         publication_year: resource.publication_year || '',
-        isbn: resource.isbn || '',
         pages: resource.pages || '',
         is_published: resource.is_published ?? true,
         is_featured: resource.is_featured || false,
@@ -566,15 +542,10 @@ function ResourceDialog({ open, onOpenChange, resource, subjects, onSuccess }) {
     } else {
       setFormData({
         title: '',
-        title_arabic: '',
         author: '',
-        author_arabic: '',
-        category: '',
         language: 'arabic',
         description: '',
-        publisher: '',
         publication_year: '',
-        isbn: '',
         pages: '',
         is_published: true,
         is_featured: false,
@@ -720,44 +691,23 @@ function ResourceDialog({ open, onOpenChange, resource, subjects, onSuccess }) {
           <div className="space-y-4">
             <h3 className="font-semibold">Basic Information</h3>
             
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="title">Title *</Label>
-                <Input
-                  id="title"
-                  value={formData.title}
-                  onChange={(e) => setFormData({...formData, title: e.target.value})}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="title_arabic">Arabic Title</Label>
-                <Input
-                  id="title_arabic"
-                  value={formData.title_arabic}
-                  onChange={(e) => setFormData({...formData, title_arabic: e.target.value})}
-                />
-              </div>
+            <div className="space-y-2">
+              <Label htmlFor="title">Title *</Label>
+              <Input
+                id="title"
+                value={formData.title}
+                onChange={(e) => setFormData({...formData, title: e.target.value})}
+                required
+              />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="author">Author *</Label>
-                <Input
-                  id="author"
-                  value={formData.author}
-                  onChange={(e) => setFormData({...formData, author: e.target.value})}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="author_arabic">Arabic Author</Label>
-                <Input
-                  id="author_arabic"
-                  value={formData.author_arabic}
-                  onChange={(e) => setFormData({...formData, author_arabic: e.target.value})}
-                />
-              </div>
+            <div className="space-y-2">
+              <Label htmlFor="author">Author</Label>
+              <Input
+                id="author"
+                value={formData.author}
+                onChange={(e) => setFormData({...formData, author: e.target.value})}
+              />
             </div>
 
             <div className="space-y-2">
@@ -775,45 +725,24 @@ function ResourceDialog({ open, onOpenChange, resource, subjects, onSuccess }) {
           <div className="space-y-4">
             <h3 className="font-semibold">Book Details</h3>
             
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="category">Category *</Label>
-                <Select
-                  value={formData.category?.toString()}
-                  onValueChange={(value) => setFormData({...formData, category: parseInt(value)})}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categories.map((cat) => (
-                      <SelectItem key={cat.id} value={cat.id.toString()}>
-                        {cat.name} {cat.name_arabic && `(${cat.name_arabic})`}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="language">Language *</Label>
-                <Select
-                  value={formData.language}
-                  onValueChange={(value) => setFormData({...formData, language: value})}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="arabic">Arabic</SelectItem>
-                    <SelectItem value="english">English</SelectItem>
-                    <SelectItem value="urdu">Urdu</SelectItem>
-                    <SelectItem value="farsi">Farsi</SelectItem>
-                    <SelectItem value="pashto">Pashto</SelectItem>
-                    <SelectItem value="turkish">Turkish</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+            <div className="space-y-2">
+              <Label htmlFor="language">Language *</Label>
+              <Select
+                value={formData.language}
+                onValueChange={(value) => setFormData({...formData, language: value})}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="arabic">Arabic</SelectItem>
+                  <SelectItem value="english">English</SelectItem>
+                  <SelectItem value="urdu">Urdu</SelectItem>
+                  <SelectItem value="farsi">Farsi</SelectItem>
+                  <SelectItem value="pashto">Pashto</SelectItem>
+                  <SelectItem value="turkish">Turkish</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="space-y-2">
@@ -955,16 +884,7 @@ function ResourceDialog({ open, onOpenChange, resource, subjects, onSuccess }) {
           <div className="space-y-4">
             <h3 className="font-semibold">Metadata</h3>
             
-            <div className="grid grid-cols-4 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="publisher">Publisher</Label>
-                <Input
-                  id="publisher"
-                  value={formData.publisher}
-                  onChange={(e) => setFormData({...formData, publisher: e.target.value})}
-                />
-              </div>
-
+            <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="publication_year">Year</Label>
                 <Input
@@ -972,15 +892,6 @@ function ResourceDialog({ open, onOpenChange, resource, subjects, onSuccess }) {
                   type="number"
                   value={formData.publication_year}
                   onChange={(e) => setFormData({...formData, publication_year: e.target.value})}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="isbn">ISBN</Label>
-                <Input
-                  id="isbn"
-                  value={formData.isbn}
-                  onChange={(e) => setFormData({...formData, isbn: e.target.value})}
                 />
               </div>
 

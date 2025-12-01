@@ -16,6 +16,7 @@ import TableRow from '@tiptap/extension-table-row'
 import TableCell from '@tiptap/extension-table-cell'
 import TableHeader from '@tiptap/extension-table-header'
 import { Node } from '@tiptap/core'
+import Paragraph from '@tiptap/extension-paragraph'
 import { ReactNodeViewRenderer, NodeViewWrapper } from '@tiptap/react'
 import {
   IconBold,
@@ -44,6 +45,7 @@ import {
   IconWeight,
   IconAnchor,
   IconTable,
+  IconSeparator,
   IconRowInsertBottom,
   IconRowInsertTop,
   IconColumnInsertRight,
@@ -156,6 +158,169 @@ const FontWeight = TextStyle.extend({
           .setMark('textStyle', { fontWeight: null })
           .removeEmptyTextStyle()
           .run()
+      },
+    }
+  },
+})
+
+// Utility functions for parsing and formatting spacing values
+const parseSpacingValue = (value) => {
+  if (!value || value === 'normal') {
+    return { value: null, unit: 'px' }
+  }
+  const match = value.match(/^(-?\d*\.?\d+)(px|em|rem|%)?$/)
+  if (match) {
+    return {
+      value: parseFloat(match[1]),
+      unit: match[2] || 'px'
+    }
+  }
+  return { value: null, unit: 'px' }
+}
+
+const formatSpacingValue = (value, unit) => {
+  if (value === null || value === undefined || value === '') {
+    return 'normal'
+  }
+  const numValue = typeof value === 'string' ? parseFloat(value) : value
+  if (isNaN(numValue)) {
+    return 'normal'
+  }
+  return `${numValue}${unit || 'px'}`
+}
+
+// Custom Word Spacing Extension
+const WordSpacing = TextStyle.extend({
+  addAttributes() {
+    return {
+      ...this.parent?.(),
+      wordSpacing: {
+        default: null,
+        parseHTML: element => {
+          const spacing = element.style.wordSpacing
+          if (!spacing || spacing === 'normal' || spacing === '0px') {
+            return null
+          }
+          return spacing
+        },
+        renderHTML: attributes => {
+          if (!attributes.wordSpacing) {
+            return {}
+          }
+          return {
+            style: `word-spacing: ${attributes.wordSpacing}`,
+          }
+        },
+      },
+    }
+  },
+  addCommands() {
+    return {
+      setWordSpacing: (wordSpacing) => ({ chain }) => {
+        if (!wordSpacing || wordSpacing === 'normal') {
+          return chain()
+            .setMark('textStyle', { wordSpacing: null })
+            .removeEmptyTextStyle()
+            .run()
+        }
+        return chain()
+          .setMark('textStyle', { wordSpacing })
+          .run()
+      },
+      unsetWordSpacing: () => ({ chain }) => {
+        return chain()
+          .setMark('textStyle', { wordSpacing: null })
+          .removeEmptyTextStyle()
+          .run()
+      },
+    }
+  },
+})
+
+// Custom Line Height Extension (for selection-level)
+const LineHeight = TextStyle.extend({
+  addAttributes() {
+    return {
+      ...this.parent?.(),
+      lineHeight: {
+        default: null,
+        parseHTML: element => {
+          const lineHeight = element.style.lineHeight
+          if (!lineHeight || lineHeight === 'normal') {
+            return null
+          }
+          return lineHeight
+        },
+        renderHTML: attributes => {
+          if (!attributes.lineHeight) {
+            return {}
+          }
+          return {
+            style: `line-height: ${attributes.lineHeight}`,
+          }
+        },
+      },
+    }
+  },
+  addCommands() {
+    return {
+      setLineHeight: (lineHeight) => ({ chain }) => {
+        if (!lineHeight || lineHeight === 'normal') {
+          return chain()
+            .setMark('textStyle', { lineHeight: null })
+            .removeEmptyTextStyle()
+            .run()
+        }
+        return chain()
+          .setMark('textStyle', { lineHeight })
+          .run()
+      },
+      unsetLineHeight: () => ({ chain }) => {
+        return chain()
+          .setMark('textStyle', { lineHeight: null })
+          .removeEmptyTextStyle()
+          .run()
+      },
+    }
+  },
+})
+
+// Custom Paragraph Extension with line height support
+const ParagraphWithLineHeight = Paragraph.extend({
+  addAttributes() {
+    return {
+      ...this.parent?.(),
+      lineHeight: {
+        default: null,
+        parseHTML: element => {
+          const lineHeight = element.style.lineHeight
+          if (!lineHeight || lineHeight === 'normal') {
+            return null
+          }
+          return lineHeight
+        },
+        renderHTML: attributes => {
+          if (!attributes.lineHeight) {
+            return {}
+          }
+          return {
+            style: `line-height: ${attributes.lineHeight}`,
+          }
+        },
+      },
+    }
+  },
+  addCommands() {
+    return {
+      ...this.parent?.(),
+      setParagraphLineHeight: (lineHeight) => ({ commands }) => {
+        if (!lineHeight || lineHeight === 'normal') {
+          return commands.updateAttributes('paragraph', { lineHeight: null })
+        }
+        return commands.updateAttributes('paragraph', { lineHeight })
+      },
+      unsetParagraphLineHeight: () => ({ commands }) => {
+        return commands.updateAttributes('paragraph', { lineHeight: null })
       },
     }
   },
@@ -449,6 +614,15 @@ const MenuBar = ({ editor, onShowShortcuts, onShowSearchReplace, onShowTableOfCo
   const [currentFontFamily, setCurrentFontFamily] = useState('Default')
   const [currentFontSize, setCurrentFontSize] = useState('Default')
   const [currentFontWeight, setCurrentFontWeight] = useState('400')
+  const [currentWordSpacing, setCurrentWordSpacing] = useState({ value: null, unit: 'px' })
+  const [currentLineHeight, setCurrentLineHeight] = useState({ value: null, unit: 'px' })
+  const [lineHeightMode, setLineHeightMode] = useState('selection') // 'selection' or 'paragraph'
+  const [showWordSpacingPopover, setShowWordSpacingPopover] = useState(false)
+  const [showLineHeightPopover, setShowLineHeightPopover] = useState(false)
+  const [wordSpacingValue, setWordSpacingValue] = useState('')
+  const [wordSpacingUnit, setWordSpacingUnit] = useState('px')
+  const [lineHeightValue, setLineHeightValue] = useState('')
+  const [lineHeightUnit, setLineHeightUnit] = useState('px')
   const [showMediaLibrary, setShowMediaLibrary] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
   const fileInputRef = useRef(null)
@@ -577,6 +751,40 @@ const MenuBar = ({ editor, onShowShortcuts, onShowSearchReplace, onShowTableOfCo
           setCurrentFontWeight(allSameWeight && firstWeight ? firstWeight : '400')
         } else {
           setCurrentFontWeight('400')
+        }
+      }
+
+      // Handle word spacing
+      const wordSpacing = textStyleAttrs.wordSpacing
+      if (wordSpacing) {
+        const parsed = parseSpacingValue(wordSpacing)
+        setCurrentWordSpacing(parsed)
+      } else {
+        setCurrentWordSpacing({ value: null, unit: 'px' })
+      }
+
+      // Handle line height (check both selection and paragraph level)
+      const lineHeight = textStyleAttrs.lineHeight
+      if (lineHeight) {
+        const parsed = parseSpacingValue(lineHeight)
+        setCurrentLineHeight(parsed)
+        setLineHeightMode('selection')
+      } else {
+        // Check paragraph-level line height
+        const { $anchor } = editor.state.selection
+        const paragraphNode = $anchor.node($anchor.depth - 1)
+        if (paragraphNode && paragraphNode.type.name === 'paragraph') {
+          const paraLineHeight = paragraphNode.attrs.lineHeight
+          if (paraLineHeight) {
+            const parsed = parseSpacingValue(paraLineHeight)
+            setCurrentLineHeight(parsed)
+            setLineHeightMode('paragraph')
+          } else {
+            setCurrentLineHeight({ value: null, unit: 'px' })
+            // Keep current mode, don't reset it
+          }
+        } else {
+          setCurrentLineHeight({ value: null, unit: 'px' })
         }
       }
     }
@@ -781,6 +989,55 @@ const MenuBar = ({ editor, onShowShortcuts, onShowSearchReplace, onShowTableOfCo
   const unsetFontWeight = () => {
     editor.chain().focus().unsetFontWeight().run()
     setCurrentFontWeight('400')
+  }
+
+  // Word spacing and line height handlers
+  const applyWordSpacing = () => {
+    if (wordSpacingValue === '' || wordSpacingValue === null) {
+      editor.chain().focus().unsetWordSpacing().run()
+      setCurrentWordSpacing({ value: null, unit: 'px' })
+    } else {
+      const formatted = formatSpacingValue(wordSpacingValue, wordSpacingUnit)
+      editor.chain().focus().setWordSpacing(formatted).run()
+      setCurrentWordSpacing({ value: parseFloat(wordSpacingValue), unit: wordSpacingUnit })
+    }
+    setShowWordSpacingPopover(false)
+  }
+
+  const resetWordSpacing = () => {
+    editor.chain().focus().unsetWordSpacing().run()
+    setWordSpacingValue('')
+    setCurrentWordSpacing({ value: null, unit: 'px' })
+  }
+
+  const applyLineHeight = () => {
+    if (lineHeightValue === '' || lineHeightValue === null) {
+      if (lineHeightMode === 'selection') {
+        editor.chain().focus().unsetLineHeight().run()
+      } else {
+        editor.chain().focus().unsetParagraphLineHeight().run()
+      }
+      setCurrentLineHeight({ value: null, unit: 'px' })
+    } else {
+      const formatted = formatSpacingValue(lineHeightValue, lineHeightUnit)
+      if (lineHeightMode === 'selection') {
+        editor.chain().focus().setLineHeight(formatted).run()
+      } else {
+        editor.chain().focus().setParagraphLineHeight(formatted).run()
+      }
+      setCurrentLineHeight({ value: parseFloat(lineHeightValue), unit: lineHeightUnit })
+    }
+    setShowLineHeightPopover(false)
+  }
+
+  const resetLineHeight = () => {
+    if (lineHeightMode === 'selection') {
+      editor.chain().focus().unsetLineHeight().run()
+    } else {
+      editor.chain().focus().unsetParagraphLineHeight().run()
+    }
+    setLineHeightValue('')
+    setCurrentLineHeight({ value: null, unit: 'px' })
   }
 
   // Font family options
@@ -1427,6 +1684,157 @@ const MenuBar = ({ editor, onShowShortcuts, onShowSearchReplace, onShowTableOfCo
           </DropdownMenuContent>
         </DropdownMenu>
 
+        {/* Word Spacing */}
+        <Popover open={showWordSpacingPopover} onOpenChange={setShowWordSpacingPopover}>
+          <PopoverTrigger asChild>
+            <Button 
+              variant={currentWordSpacing.value !== null ? 'default' : 'outline'} 
+              size="sm"
+              onClick={() => {
+                if (!showWordSpacingPopover) {
+                  setWordSpacingValue(currentWordSpacing.value !== null ? currentWordSpacing.value.toString() : '')
+                  setWordSpacingUnit(currentWordSpacing.unit)
+                }
+              }}
+            >
+              <IconTypography size={16} />
+              {currentWordSpacing.value !== null ? `${currentWordSpacing.value}${currentWordSpacing.unit}` : 'WS'}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-64 p-4">
+            <h4 className="font-medium mb-3">Word Spacing</h4>
+            
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <Input
+                  type="number"
+                  placeholder="0"
+                  value={wordSpacingValue}
+                  onChange={(e) => setWordSpacingValue(e.target.value)}
+                  className="flex-1"
+                  step="0.1"
+                />
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm" className="w-20">
+                      {wordSpacingUnit}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent>
+                    <DropdownMenuItem onClick={() => setWordSpacingUnit('px')}>px</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setWordSpacingUnit('em')}>em</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setWordSpacingUnit('rem')}>rem</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setWordSpacingUnit('%')}>%</DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+              
+              <div className="flex items-center justify-between pt-2 border-t">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground">
+                    {currentWordSpacing.value !== null 
+                      ? `Current: ${currentWordSpacing.value}${currentWordSpacing.unit}`
+                      : 'Current: normal'}
+                  </span>
+                </div>
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" onClick={resetWordSpacing}>
+                    Reset
+                  </Button>
+                  <Button variant="default" size="sm" onClick={applyWordSpacing}>
+                    Apply
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </PopoverContent>
+        </Popover>
+
+        {/* Line Height */}
+        <Popover open={showLineHeightPopover} onOpenChange={setShowLineHeightPopover}>
+          <PopoverTrigger asChild>
+            <Button 
+              variant={currentLineHeight.value !== null ? 'default' : 'outline'} 
+              size="sm"
+              onClick={() => {
+                if (!showLineHeightPopover) {
+                  setLineHeightValue(currentLineHeight.value !== null ? currentLineHeight.value.toString() : '')
+                  setLineHeightUnit(currentLineHeight.unit)
+                }
+              }}
+            >
+              <IconSeparator size={16} />
+              {currentLineHeight.value !== null ? `${currentLineHeight.value}${currentLineHeight.unit}` : 'LH'}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-64 p-4">
+            <h4 className="font-medium mb-3">Line Height</h4>
+            
+            <div className="space-y-3">
+              <div>
+                <Label className="text-sm mb-2 block">Apply to:</Label>
+                <RadioGroup 
+                  value={lineHeightMode} 
+                  onValueChange={setLineHeightMode}
+                  className="flex gap-4"
+                >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="selection" id="lineheight-selection" />
+                    <Label htmlFor="lineheight-selection" className="cursor-pointer text-sm">Selection</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="paragraph" id="lineheight-paragraph" />
+                    <Label htmlFor="lineheight-paragraph" className="cursor-pointer text-sm">Paragraph</Label>
+                  </div>
+                </RadioGroup>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Input
+                  type="number"
+                  placeholder="1.5"
+                  value={lineHeightValue}
+                  onChange={(e) => setLineHeightValue(e.target.value)}
+                  className="flex-1"
+                  step="0.1"
+                  min="0.5"
+                />
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm" className="w-20">
+                      {lineHeightUnit}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent>
+                    <DropdownMenuItem onClick={() => setLineHeightUnit('px')}>px</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setLineHeightUnit('em')}>em</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setLineHeightUnit('rem')}>rem</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setLineHeightUnit('%')}>%</DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+              
+              <div className="flex items-center justify-between pt-2 border-t">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground">
+                    {currentLineHeight.value !== null 
+                      ? `Current: ${currentLineHeight.value}${currentLineHeight.unit} (${lineHeightMode})`
+                      : 'Current: normal'}
+                  </span>
+                </div>
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" onClick={resetLineHeight}>
+                    Reset
+                  </Button>
+                  <Button variant="default" size="sm" onClick={applyLineHeight}>
+                    Apply
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </PopoverContent>
+        </Popover>
+
         {/* Font Color */}
         <Popover>
           <PopoverTrigger asChild>
@@ -1604,6 +2012,7 @@ export default function RichTextEditor({ content, onChange }) {
     extensions: [
       StarterKit.configure({
         codeBlock: false, // Disable default code block, use custom one with syntax highlighting
+        paragraph: false, // Disable default paragraph, use custom one with line height support
         heading: {
           levels: [1, 2, 3],
         },
@@ -1655,6 +2064,9 @@ export default function RichTextEditor({ content, onChange }) {
       FontSize,
       Color,
       FontWeight,
+      WordSpacing,
+      LineHeight,
+      ParagraphWithLineHeight,
       CodeBlockWithHighlight,
       CalloutBlock,
       CollapsibleBlock,
