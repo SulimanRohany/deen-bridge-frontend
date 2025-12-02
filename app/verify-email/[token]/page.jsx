@@ -15,6 +15,8 @@ export default function VerifyEmailPage() {
     const [loading, setLoading] = useState(true)
     const [verified, setVerified] = useState(false)
     const [error, setError] = useState(null)
+    const [isLocked, setIsLocked] = useState(false)
+    const [userEmail, setUserEmail] = useState(null)
     const { resolvedTheme } = useTheme()
 
     const verifyEmail = useCallback(async (verificationToken) => {
@@ -31,6 +33,17 @@ export default function VerifyEmailPage() {
                 || err.response?.data?.message
                 || 'Invalid or expired verification link. Please request a new verification email.'
             setError(errorMessage)
+            
+            // Check if account is locked
+            if (errorMessage.includes('Too many verification attempts') || errorMessage.includes('locked')) {
+                setIsLocked(true)
+            }
+            
+            // Try to extract email from error response for resend functionality
+            const email = err.response?.data?.email
+            if (email) {
+                setUserEmail(email)
+            }
         } finally {
             setLoading(false)
         }
@@ -171,16 +184,23 @@ export default function VerifyEmailPage() {
                                     </p>
                                 </div>
                                 <div className="space-y-4 pt-4">
+                                    {!isLocked && (
+                                        <Link href={userEmail ? `/verify-your-email?email=${encodeURIComponent(userEmail)}` : '/resend-verification'}>
+                                            <button className="w-full h-12 bg-primary text-primary-foreground rounded-lg font-semibold hover:bg-primary/90 transition-colors">
+                                                Resend Verification Email
+                                            </button>
+                                        </Link>
+                                    )}
                                     <Link href="/login">
-                                        <button className="w-full h-12 bg-primary text-primary-foreground rounded-lg font-semibold hover:bg-primary/90 transition-colors">
-                                            Go to Login
+                                        <button className={`w-full h-12 border-2 border-primary text-primary rounded-lg font-semibold hover:bg-primary/10 transition-colors ${isLocked ? 'bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground' : ''}`}>
+                                            {isLocked ? 'Back to Login' : 'Go to Login'}
                                         </button>
                                     </Link>
-                                    <Link href="/resend-verification">
-                                        <button className="w-full h-12 border-2 border-primary text-primary rounded-lg font-semibold hover:bg-primary/10 transition-colors">
-                                            Resend Verification Email
-                                        </button>
-                                    </Link>
+                                    {isLocked && (
+                                        <p className="text-xs text-center text-muted-foreground">
+                                            If you continue to have issues, please contact support.
+                                        </p>
+                                    )}
                                 </div>
                             </div>
                         ) : null}

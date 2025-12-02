@@ -14,6 +14,7 @@ export default function CheckEmailPage() {
     const [email, setEmail] = useState(null)
     const [loading, setLoading] = useState(false)
     const [resendSuccess, setResendSuccess] = useState(false)
+    const [error, setError] = useState(null)
     const { resolvedTheme } = useTheme()
 
     useEffect(() => {
@@ -30,12 +31,21 @@ export default function CheckEmailPage() {
         
         setLoading(true)
         setResendSuccess(false)
+        setError(null)
         try {
             await authAPI.resendVerification(email)
             setResendSuccess(true)
         } catch (err) {
-            // Even if there's an error, show success to prevent email enumeration
-            setResendSuccess(true)
+            // Check for specific errors (rate limiting, account locked)
+            const errorMessage = err.response?.data?.email?.[0] 
+                || err.response?.data?.message
+            
+            if (errorMessage && (errorMessage.includes('Too many') || errorMessage.includes('locked'))) {
+                setError(errorMessage)
+            } else {
+                // For other errors, show success to prevent email enumeration
+                setResendSuccess(true)
+            }
         } finally {
             setLoading(false)
         }
@@ -167,6 +177,12 @@ export default function CheckEmailPage() {
                                             Verification email sent! Please check your inbox.
                                         </p>
                                     </div>
+                                ) : error ? (
+                                    <div className="rounded-lg bg-destructive/10 border border-destructive/20 p-3">
+                                        <p className="text-sm text-destructive text-center">
+                                            {error}
+                                        </p>
+                                    </div>
                                 ) : (
                                     <button
                                         onClick={handleResend}
@@ -185,6 +201,11 @@ export default function CheckEmailPage() {
                                 )}
                             </div>
                         )}
+
+                        <div className="text-xs text-muted-foreground text-center space-y-1">
+                            <p>The verification link will expire in <strong>24 hours</strong>.</p>
+                            <p>If you don't see the email, check your spam folder.</p>
+                        </div>
 
                         <div className="pt-4 border-t">
                             <Link href="/login">

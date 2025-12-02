@@ -146,6 +146,18 @@ export const AuthProvider = ({ children }) => {
         }
       }
     } catch (error) {
+      // Check if this is an email verification error
+      const errorData = error.response?.data;
+      
+      if (errorData?.verification_required || errorData?.email_verified !== undefined) {
+        // Extract email from error response
+        const userEmail = errorData.user_email || data.email.toLowerCase();
+        
+        // Redirect to verify-your-email page
+        router.push(`/verify-your-email?email=${encodeURIComponent(userEmail)}`);
+        return;
+      }
+      
       setMessage(extractErrorMessage(error));
     }
   };
