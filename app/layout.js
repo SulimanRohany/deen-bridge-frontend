@@ -80,7 +80,7 @@ export default function RootLayout({ children }) {
         <meta name="msapplication-TileColor" content="#2563eb" />
         
         {/* Permissions Policy - Allow camera and microphone for live sessions */}
-        <meta httpEquiv="Permissions-Policy" content="camera=(self), microphone=(self), geolocation=()" />
+        <meta httpEquiv="Permissions-Policy" content="camera=(self), microphone=(self)" />
         
         {/* Structured Data - Organization */}
         <Script

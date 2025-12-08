@@ -22,6 +22,8 @@ import {
   SignalLow,
   Wifi,
   MoreVertical,
+  Circle,
+  Square,
 } from "lucide-react"
 import { useState, useEffect } from "react"
 import {
@@ -70,6 +72,12 @@ export function ControlPanel({
   isObserverMode = false,
   isSessionInfoOpen: externalIsSessionInfoOpen,
   setIsSessionInfoOpen: externalSetIsSessionInfoOpen,
+  // Recording props
+  isRecording = false,
+  onStartRecording,
+  onStopRecording,
+  recordingDuration = 0,
+  sessionId,
 }) {
   const [copied, setCopied] = useState(false)
   const [internalIsSessionInfoOpen, setInternalIsSessionInfoOpen] = useState(false)
@@ -145,7 +153,7 @@ export function ControlPanel({
                 <TooltipTrigger asChild>
                   <div className={`flex items-center gap-1 sm:gap-1.5 md:gap-2 px-1.5 sm:px-2 md:px-3 py-1 sm:py-1.5 md:py-2 rounded-lg ${signalDisplay.bgColor} cursor-help transition-all hover:scale-105`}>
                     <SignalIcon className={`w-3 h-3 sm:w-3.5 sm:h-3.5 md:w-4 md:h-4 ${signalDisplay.color}`} />
-                    <div className="flex flex-col hidden sm:flex">
+                    <div className="hidden sm:flex flex-col">
                       <span className={`text-[10px] md:text-xs font-semibold ${signalDisplay.color} leading-tight`}>
                         {signalDisplay.label}
                       </span>
@@ -246,6 +254,37 @@ export function ControlPanel({
 
           <div className="w-px h-6 sm:h-8 bg-gray-700 mx-0.5 sm:mx-1 hidden sm:block" />
 
+          {/* Recording Button - Only for teachers/moderators */}
+          {(userRole === 'moderator' || userRole === 'teacher') && onStartRecording && onStopRecording && (
+            <>
+              <Button
+                variant={isRecording ? "destructive" : "secondary"}
+                size="lg"
+                onClick={isRecording ? onStopRecording : onStartRecording}
+                className={`rounded-full w-10 h-10 sm:w-11 sm:h-11 md:w-12 md:h-12 p-0 transition-opacity duration-200 hover:opacity-70 shadow-lg border ${
+                  isRecording
+                    ? "bg-red-600/90 text-white border-red-500 animate-pulse"
+                    : "bg-gray-700/90 text-white border-gray-600"
+                } hidden md:flex`}
+                title={isRecording ? "Stop recording" : "Start recording"}
+              >
+                {isRecording ? (
+                  <Square className="w-4 h-4 sm:w-4 sm:h-4 md:w-5 md:h-5" />
+                ) : (
+                  <Circle className="w-4 h-4 sm:w-4 sm:h-4 md:w-5 md:h-5 fill-current" />
+                )}
+              </Button>
+              {isRecording && (
+                <div className="hidden md:flex items-center gap-1.5 px-2 py-1 bg-red-600/20 rounded-lg border border-red-500/50">
+                  <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+                  <span className="text-xs font-medium text-red-400">
+                    {formatRecordingDuration(recordingDuration)}
+                  </span>
+                </div>
+              )}
+            </>
+          )}
+
           <Button
             variant="secondary"
             size="lg"
@@ -293,31 +332,60 @@ export function ControlPanel({
                 <MoreVertical className="w-4 h-4 sm:w-4 sm:h-4 md:w-5 md:h-5" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent 
-              align="end" 
+            <DropdownMenuContent
+              align="end"
               side="top"
               sideOffset={8}
               alignOffset={-8}
               className="bg-gray-800 border-gray-700 text-white w-[180px] sm:min-w-[200px] mb-2 z-50"
             >
               {!isObserverMode && (
-                <DropdownMenuItem 
-                  onClick={onToggleScreenShare}
-                  disabled={!isScreenShareSupported}
-                  className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2.5 sm:py-3 cursor-pointer hover:bg-gray-700 focus:bg-gray-700 active:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation"
-                >
-                  {isScreenSharing ? (
-                    <>
-                      <MonitorOff className="w-4 h-4 sm:w-4 sm:h-4 flex-shrink-0" />
-                      <span className="text-sm sm:text-base">Stop Screen Share</span>
-                    </>
-                  ) : (
-                    <>
-                      <Monitor className="w-4 h-4 sm:w-4 sm:h-4 flex-shrink-0" />
-                      <span className="text-sm sm:text-base">Share Screen</span>
-                    </>
+                <>
+                  <DropdownMenuItem
+                    onClick={onToggleScreenShare}
+                    disabled={!isScreenShareSupported}
+                    className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2.5 sm:py-3 cursor-pointer hover:bg-gray-700 focus:bg-gray-700 active:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation"
+                  >
+                    {isScreenSharing ? (
+                      <>
+                        <MonitorOff className="w-4 h-4 sm:w-4 sm:h-4 flex-shrink-0" />
+                        <span className="text-sm sm:text-base">Stop Screen Share</span>
+                      </>
+                    ) : (
+                      <>
+                        <Monitor className="w-4 h-4 sm:w-4 sm:h-4 flex-shrink-0" />
+                        <span className="text-sm sm:text-base">Share Screen</span>
+                      </>
+                    )}
+                  </DropdownMenuItem>
+                  
+                  {/* Recording option for teachers - Mobile */}
+                  {(userRole === 'moderator' || userRole === 'teacher') && onStartRecording && onStopRecording && (
+                    <DropdownMenuItem
+                      onClick={isRecording ? onStopRecording : onStartRecording}
+                      className={`flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2.5 sm:py-3 cursor-pointer hover:bg-gray-700 focus:bg-gray-700 active:bg-gray-600 touch-manipulation ${
+                        isRecording ? 'text-red-400' : ''
+                      }`}
+                    >
+                      {isRecording ? (
+                        <>
+                          <Square className="w-4 h-4 sm:w-4 sm:h-4 flex-shrink-0" />
+                          <span className="text-sm sm:text-base">Stop Recording</span>
+                          {recordingDuration > 0 && (
+                            <span className="text-xs text-red-300 ml-auto">
+                              {formatRecordingDuration(recordingDuration)}
+                            </span>
+                          )}
+                        </>
+                      ) : (
+                        <>
+                          <Circle className="w-4 h-4 sm:w-4 sm:h-4 flex-shrink-0 fill-current" />
+                          <span className="text-sm sm:text-base">Start Recording</span>
+                        </>
+                      )}
+                    </DropdownMenuItem>
                   )}
-                </DropdownMenuItem>
+                </>
               )}
               <DropdownMenuItem 
                 onClick={onToggleChat}
@@ -560,4 +628,15 @@ function CallTimer() {
   }
 
   return <span>{formatTime(duration)}</span>
+}
+
+function formatRecordingDuration(seconds) {
+  const hours = Math.floor(seconds / 3600)
+  const minutes = Math.floor((seconds % 3600) / 60)
+  const secs = seconds % 60
+
+  if (hours > 0) {
+    return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`
+  }
+  return `${minutes.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`
 }

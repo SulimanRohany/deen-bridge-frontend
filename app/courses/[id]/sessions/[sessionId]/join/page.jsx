@@ -12,6 +12,7 @@ import { useAuth } from "@/hooks/use-auth"
 
 import { useParams, useRouter } from "next/navigation"
 import { config } from "@/lib/config"
+import api from "@/lib/api"
 
 export default function VideoConference() {
   const params = useParams()
@@ -32,6 +33,12 @@ export default function VideoConference() {
   const [isObserverMode, setIsObserverMode] = useState(false) // Track if user is in observer mode (super admin monitoring)
   const hasAttemptedJoinRef = useRef(false) // Track if join has been attempted to prevent duplicates
   const [isSessionInfoOpen, setIsSessionInfoOpen] = useState(false) // Track session info sheet state
+  
+  // Recording state
+  const [isRecording, setIsRecording] = useState(false)
+  const [recordingDuration, setRecordingDuration] = useState(0)
+  const [recordingStartedAt, setRecordingStartedAt] = useState(null)
+  const recordingStatusIntervalRef = useRef(null)
   
   // Check if screen sharing is supported
   const isScreenShareSupported = typeof navigator !== 'undefined' && 
@@ -391,6 +398,100 @@ export default function VideoConference() {
     // Note: Unread count will be reset automatically when ChatPanel marks messages as read
   }
 
+  // Recording functions
+  const handleStartRecording = async () => {
+    try {
+      const response = await api.post(`course/session/${sessionId}/start-recording/`)
+      if (response.data.success) {
+        setIsRecording(true)
+        setRecordingStartedAt(new Date(response.data.recording_started_at || new Date().toISOString()))
+        setRecordingDuration(0)
+      }
+    } catch (error) {
+      console.error('Failed to start recording:', error)
+      setError(error.response?.data?.error || 'Failed to start recording')
+    }
+  }
+
+  const handleStopRecording = async () => {
+    try {
+      const response = await api.post(`course/session/${sessionId}/stop-recording/`)
+      if (response.data.success) {
+        setIsRecording(false)
+        setRecordingStartedAt(null)
+        setRecordingDuration(0)
+      }
+    } catch (error) {
+      console.error('Failed to stop recording:', error)
+      setError(error.response?.data?.error || 'Failed to stop recording')
+    }
+  }
+
+  // Poll recording status
+  useEffect(() => {
+    if (!sessionId || !isInCall) return
+
+    const fetchRecordingStatus = async () => {
+      try {
+        const response = await api.get(`course/session/${sessionId}/recording-status/`)
+        const status = response.data
+        setIsRecording(status.is_recording)
+        
+        if (status.is_recording && status.recording_started_at) {
+          setRecordingStartedAt(new Date(status.recording_started_at))
+          // Calculate duration
+          const now = new Date()
+          const started = new Date(status.recording_started_at)
+          setRecordingDuration(Math.floor((now - started) / 1000))
+        } else {
+          setRecordingStartedAt(null)
+          setRecordingDuration(0)
+        }
+      } catch (error) {
+        // Silently fail - recording status is optional
+      }
+    }
+
+    // Fetch immediately
+    fetchRecordingStatus()
+
+    // Poll every 2 seconds
+    recordingStatusIntervalRef.current = setInterval(fetchRecordingStatus, 2000)
+
+    return () => {
+      if (recordingStatusIntervalRef.current) {
+        clearInterval(recordingStatusIntervalRef.current)
+      }
+    }
+  }, [sessionId, isInCall])
+
+  // Update recording duration when recording is active
+  useEffect(() => {
+    if (!isRecording || !recordingStartedAt) {
+      setRecordingDuration(0)
+      return
+    }
+
+    const interval = setInterval(() => {
+      const now = new Date()
+      const started = new Date(recordingStartedAt)
+      setRecordingDuration(Math.floor((now - started) / 1000))
+    }, 1000)
+
+    return () => clearInterval(interval)
+  }, [isRecording, recordingStartedAt])
+
+  // Format recording duration helper
+  const formatRecordingDuration = (seconds) => {
+    const hours = Math.floor(seconds / 3600)
+    const minutes = Math.floor((seconds % 3600) / 60)
+    const secs = seconds % 60
+
+    if (hours > 0) {
+      return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`
+    }
+    return `${minutes.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`
+  }
 
   // Redirect to login if not authenticated after loading completes
   useEffect(() => {
@@ -457,6 +558,17 @@ export default function VideoConference() {
         </div>
       )}
       
+      {/* Recording Banner */}
+      {isRecording && (
+        <div className="bg-red-900/50 border-b border-red-700/50 px-4 py-2 flex items-center justify-center gap-2 text-sm text-red-200 z-50">
+          <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
+          <span className="font-medium">Recording in Progress</span>
+          <span className="opacity-75">
+            {recordingDuration > 0 && `- ${formatRecordingDuration(recordingDuration)}`}
+          </span>
+        </div>
+      )}
+      
       {/* Main video area with improved layout */}
       <div className="flex-1 overflow-hidden relative">
         <VideoGrid
@@ -510,6 +622,11 @@ export default function VideoConference() {
           isObserverMode={isObserverMode}
           isSessionInfoOpen={isSessionInfoOpen}
           setIsSessionInfoOpen={setIsSessionInfoOpen}
+          isRecording={isRecording}
+          onStartRecording={handleStartRecording}
+          onStopRecording={handleStopRecording}
+          recordingDuration={recordingDuration}
+          sessionId={sessionId}
         />
       </div>
 

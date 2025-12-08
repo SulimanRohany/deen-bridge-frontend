@@ -177,8 +177,8 @@ export default function Footer() {
               </div>
               <div className="flex items-center group">
                 <IconMail className="h-5 w-5 text-primary mr-3 flex-shrink-0 group-hover:scale-110 transition-transform" />
-                <a href="mailto:info@deenbridge.com" className="text-muted-foreground hover:text-primary transition-colors text-sm">
-                  info@deenbridge.com
+                <a href="mailto:support@deenbridge.com" className="text-muted-foreground hover:text-primary transition-colors text-sm">
+                  support@deenbridge.com
                 </a>
               </div>
             </div>
