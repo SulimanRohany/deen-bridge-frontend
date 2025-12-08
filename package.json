@@ -58,6 +58,7 @@
     "date-fns": "^4.1.0",
     "emoji-mart": "^5.6.0",
     "emoji-picker-react": "^4.13.2",
+    "framer-motion": "^12.23.25",
     "jwt-decode": "^4.0.0",
     "lucide-react": "^0.539.0",
     "mediasoup-client": "^3.16.5",
